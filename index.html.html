@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="description" content="명길 & 진경의 가계부 대시보드 — 자산·지출·저축·대형계획 관리"/>
+<meta name="theme-color" content="#5B52E8"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="행복하게 살기"/>
+<meta property="og:title" content="🏡 행복하게 살기 💝"/>
+<meta property="og:description" content="가계부 대시보드 — 자산·지출·저축 관리"/>
+<meta property="og:type" content="website"/>
+<title>🏡 행복하게 살기 💝</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --primary:#6C63FF;--plight:#EEEEFF;
+  --green:#2ECC8A;--red:#FF5C7A;--orange:#FF9F43;
+  --blue:#3D9FFF;--purple:#A78BFA;
+  --bg:#F0F2FA;--card:#fff;--text:#1E2233;--sub:#7B82A0;
+  --border:#E4E8F4;--sh:0 2px 16px rgba(60,60,120,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#5B52E8,#8B7FFF 55%,#B59FFF);
+  padding:18px 32px;display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 4px 24px rgba(91,82,232,.3);}
+.hdr-l .title{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.5px;}
+.hdr-l .sub{font-size:.75rem;color:rgba(255,255,255,.8);margin-top:3px;}
+
+/* MONTH NAV */
+.month-nav{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.mnav-btn{background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;
+  border-radius:8px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;
+  justify-content:center;transition:background .2s;}
+.mnav-btn:hover{background:rgba(255,255,255,.35);}
+.mnav-btn:disabled{opacity:.3;cursor:default;}
+.month-display{color:#fff;font-size:.95rem;font-weight:800;min-width:110px;text-align:center;}
+
+.hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.hdr-nums{text-align:right;color:rgba(255,255,255,.9);font-size:.8rem;line-height:1.8;}
+.hdr-nums strong{color:#fff;font-size:.95rem;}
+.hdr-btns{display:flex;gap:8px;}
+.hbtn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.45);
+  color:#fff;padding:6px 14px;border-radius:10px;font-size:.78rem;font-weight:700;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.hbtn:hover{background:rgba(255,255,255,.33);}
+.hbtn.add{background:rgba(46,204,138,.35);border-color:rgba(46,204,138,.7);}
+.hbtn.add:hover{background:rgba(46,204,138,.5);}
+
+/* NAV TABS */
+.nav{background:#fff;display:flex;padding:0 32px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:90;box-shadow:0 2px 12px rgba(0,0,0,.05);}
+.ntab{padding:13px 18px;cursor:pointer;font-size:.85rem;font-weight:600;
+  color:var(--sub);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.ntab:hover{color:var(--primary);}
+.ntab.on{color:var(--primary);border-bottom-color:var(--primary);}
+
+/* MAIN */
+.main{padding:24px 32px;max-width:1320px;margin:0 auto;}
+.sec{display:none;}.sec.on{display:block;}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:20px;}
+.g2e{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+
+/* SUMMARY CARD */
+.sc{background:var(--card);border-radius:13px;padding:16px 18px;
+  box-shadow:var(--sh);display:flex;gap:12px;align-items:flex-start;}
+.sci{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:1.15rem;flex-shrink:0;}
+.sclbl{font-size:.68rem;color:var(--sub);margin-bottom:3px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.4px;}
+.scval{font-size:1.18rem;font-weight:800;letter-spacing:-.5px;}
+.scchg{font-size:.68rem;margin-top:3px;}
+.up{color:var(--red);}.dn{color:var(--green);}
+
+/* CARD */
+.card{background:var(--card);border-radius:13px;padding:20px;box-shadow:var(--sh);}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.ct{font-size:.92rem;font-weight:700;}
+.cbdg{font-size:.67rem;padding:3px 8px;border-radius:20px;
+  background:var(--plight);color:var(--primary);font-weight:700;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th{text-align:left;padding:7px 9px;color:var(--sub);font-weight:700;
+  border-bottom:2px solid var(--border);font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;}
+td{padding:9px 9px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#F8F9FF;}
+.r{text-align:right;}.b{font-weight:700;}
+.tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.67rem;font-weight:700;}
+.tg{background:#E5FAF1;color:#18A065;}.tr{background:#FFE8EE;color:#E83A5A;}
+.tb{background:#E6F1FF;color:#2B70D8;}.to{background:#FFF3E0;color:#D4750A;}
+.tp{background:#F0EEFF;color:#5B4FD8;}
+
+/* PROGRESS */
+.pw{display:flex;flex-direction:column;gap:10px;}
+.pt{display:flex;justify-content:space-between;margin-bottom:3px;font-size:.8rem;}
+.plbl{font-weight:700;}.pval{color:var(--sub);font-size:.74rem;}
+.pbar{height:7px;background:var(--border);border-radius:99px;overflow:hidden;}
+.pfill{height:100%;border-radius:99px;transition:width .7s;}
+
+/* LEGEND */
+.lgnd{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
+.li{display:flex;align-items:center;gap:8px;font-size:.78rem;}
+.ldot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lname{flex:1;}.lpct{font-weight:700;}
+
+/* DIVIDER */
+.dvr{display:flex;gap:8px;align-items:center;margin:14px 0 10px;}
+.dvrlbl{font-size:.72rem;font-weight:700;color:var(--sub);white-space:nowrap;}
+.dvrline{flex:1;height:1px;background:var(--border);}
+
+/* GAUGE */
+.gauge-wrap{text-align:center;padding:6px 0;}
+.gauge-ring{width:115px;height:115px;border-radius:50%;margin:0 auto 10px;
+  display:flex;align-items:center;justify-content:center;}
+.gauge-inner{width:82px;height:82px;background:#fff;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.gpct{font-size:1.25rem;font-weight:800;color:var(--primary);}
+.glbl{font-size:.63rem;color:var(--sub);}
+
+/* ════ TREND SECTION ════ */
+.trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+.trend-grid-1{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:20px;}
+
+/* month badge strip */
+.month-list{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.mbadge{padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:700;
+  background:var(--plight);color:var(--sub);cursor:pointer;transition:all .2s;}
+.mbadge:hover{background:#DDD9FF;}
+.mbadge.cur{background:var(--primary);color:#fff;}
+
+/* delta chip */
+.delta{font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;}
+.delta.pos{background:#E5FAF1;color:#18A065;}
+.delta.neg{background:#FFE8EE;color:#E83A5A;}
+.delta.zero{background:#F3F4F8;color:var(--sub);}
+
+/* ════ DRAWER ════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:200;
+  display:none;backdrop-filter:blur(2px);}
+.overlay.show{display:block;}
+
+.drawer{position:fixed;top:0;right:-700px;width:680px;height:100vh;
+  background:#fff;z-index:201;overflow-y:auto;
+  box-shadow:-8px 0 40px rgba(0,0,0,.15);
+  transition:right .32s cubic-bezier(.4,0,.2,1);}
+.drawer.open{right:0;}
+
+.drawer-hdr{background:linear-gradient(135deg,#5B52E8,#8B7FFF);
+  padding:18px 22px;display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;z-index:1;}
+.drawer-title{color:#fff;font-size:1rem;font-weight:800;}
+.drawer-month-badge{background:rgba(255,255,255,.25);color:#fff;padding:3px 10px;
+  border-radius:20px;font-size:.75rem;font-weight:700;}
+.drawer-close{background:rgba(255,255,255,.2);border:none;color:#fff;
+  width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:.9rem;}
+.drawer-close:hover{background:rgba(255,255,255,.35);}
+.drawer-body{padding:18px 22px 100px;}
+
+.igroup{margin-bottom:22px;}
+.igroup-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--primary);margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid var(--plight);}
+.irow{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.irow label{font-size:.8rem;font-weight:600;flex:1;}
+.irow input{width:155px;padding:6px 9px;border:2px solid var(--border);border-radius:8px;
+  font-size:.83rem;font-family:inherit;text-align:right;outline:none;transition:border .2s;}
+.irow input:focus{border-color:var(--primary);}
+.irow .unit{font-size:.72rem;color:var(--sub);width:18px;}
+
+.drawer-footer{position:sticky;bottom:0;background:#fff;
+  padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;}
+.btn-save{flex:1;background:var(--primary);color:#fff;border:none;
+  padding:11px;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;}
+.btn-save:hover{background:#5550DD;}
+.btn-cancel{background:var(--bg);color:var(--sub);border:none;
+  padding:11px 18px;border-radius:9px;font-size:.85rem;font-weight:600;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  background:#6C63FF;color:#fff;padding:11px 26px;border-radius:28px;
+  font-weight:700;font-size:.88rem;z-index:400;
+  box-shadow:0 4px 20px rgba(108,99,255,.45);
+  animation:fadeup .3s ease;}
+@keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+/* ════ LOCK SCREEN ════ */
+#lock_screen{position:fixed;inset:0;background:linear-gradient(145deg,#3B35C8,#6C63FF 45%,#A78BFA);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  padding:20px;}
+.lock-box{background:#fff;border-radius:28px;padding:36px 32px 28px;text-align:center;
+  width:340px;max-width:100%;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+.lock-icon{font-size:3.2rem;margin-bottom:6px;}
+.lock-title{font-size:1.35rem;font-weight:800;letter-spacing:-.5px;margin-bottom:3px;}
+.lock-sub{font-size:.82rem;color:var(--sub);margin-bottom:22px;min-height:18px;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:24px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--border);
+  transition:all .2s;flex-shrink:0;}
+.pin-dot.filled{background:var(--primary);transform:scale(1.1);}
+.pin-dot.error{background:var(--red);}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  max-width:220px;margin:0 auto 16px;}
+.numpad-btn{background:var(--bg);border:2px solid var(--border);border-radius:14px;
+  height:56px;font-size:1.25rem;font-weight:700;cursor:pointer;
+  color:var(--text);transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.numpad-btn:hover{background:var(--plight);border-color:var(--primary);color:var(--primary);}
+.numpad-btn:active{transform:scale(.94);}
+.numpad-btn.del{font-size:1rem;color:var(--sub);}
+.numpad-btn.empty{border-color:transparent;background:transparent;cursor:default;}
+.lock-hint{font-size:.73rem;color:var(--sub);margin-top:8px;}
+
+/* ════ SETTINGS MODAL ════ */
+.settings-modal{background:#fff;border-radius:22px;padding:28px;width:440px;
+  max-width:96vw;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.settings-section{margin-bottom:20px;}
+.settings-section-title{font-size:.75rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--sub);margin-bottom:10px;}
+.settings-btn{width:100%;background:var(--bg);border:2px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--text);
+  display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:8px;transition:all .2s;}
+.settings-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--plight);}
+.settings-btn.danger{border-color:#FFE8EE;color:var(--red);}
+.settings-btn.danger:hover{background:#FFE8EE;}
+.settings-btn .sb-icon{font-size:1.1rem;width:28px;text-align:center;}
+.settings-btn .sb-desc{font-size:.73rem;color:var(--sub);margin-top:1px;font-weight:400;}
+
+/* ════ PLAN CARDS ════ */
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:22px;}
+.plan-card{background:var(--card);border-radius:16px;padding:20px;box-shadow:var(--sh);
+  position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.plan-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(60,60,120,.12);}
+.plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.plan-card .pc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.plan-card .pc-emoji{font-size:1.8rem;line-height:1;}
+.plan-card .pc-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s;}
+.plan-card:hover .pc-actions{opacity:1;}
+.plan-card .pc-act-btn{background:var(--border);border:none;border-radius:6px;width:26px;height:26px;
+  cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;}
+.plan-card .pc-act-btn:hover{background:#DDD9FF;color:var(--primary);}
+.plan-card .pc-act-btn.del:hover{background:#FFE8EE;color:var(--red);}
+.plan-card .pc-name{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.plan-card .pc-cat{font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;
+  display:inline-block;margin-bottom:10px;}
+.plan-card .pc-amount{font-size:1.4rem;font-weight:800;margin-bottom:4px;}
+.plan-card .pc-saved-row{display:flex;justify-content:space-between;font-size:.75rem;
+  color:var(--sub);margin-bottom:6px;}
+.plan-card .pc-pbar{height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:10px;}
+.plan-card .pc-pfill{height:100%;border-radius:99px;transition:width .7s;}
+.plan-card .pc-meta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--sub);}
+.plan-card .pc-meta strong{color:var(--text);}
+.plan-card .pc-monthly{background:var(--bg);border-radius:8px;padding:8px 10px;
+  margin-top:8px;font-size:.75rem;color:var(--sub);}
+.plan-card .pc-monthly strong{color:var(--primary);}
+.plan-card .pc-notes{font-size:.73rem;color:var(--sub);margin-top:8px;
+  padding-top:8px;border-top:1px solid var(--border);line-height:1.5;}
+/* sub-items in card */
+.pc-subitems{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.pc-si-hdr{display:flex;justify-content:space-between;font-size:.72rem;font-weight:700;
+  color:var(--sub);margin-bottom:7px;}
+.pc-si-hdr .si-pct{font-weight:800;}
+.pc-si-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:.78rem;
+  border-bottom:1px solid var(--border);}
+.pc-si-row:last-child{border-bottom:none;}
+.pc-si-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;}
+.pc-si-row .si-name{flex:1;transition:all .2s;}
+.pc-si-row.si-done .si-name{text-decoration:line-through;color:var(--sub);}
+.pc-si-row .si-amt{font-weight:700;white-space:nowrap;}
+.pc-si-row.si-done .si-amt{color:var(--green);}
+.pc-si-bar{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:6px;}
+.pc-si-fill{height:100%;background:var(--green);border-radius:99px;transition:width .5s;}
+/* sub-items in modal */
+.si-modal-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);
+  border-radius:8px;margin-bottom:6px;}
+.si-modal-row input[type=text]{flex:1;padding:6px 8px;border:1.5px solid var(--border);
+  border-radius:7px;font-size:.82rem;font-family:inherit;outline:none;}
+.si-modal-row input[type=text]:focus{border-color:var(--primary);}
+.si-modal-row input[type=number]{width:110px;padding:6px 8px;border:1.5px solid var(--border);
+  border-radius:7px;font-size:.82rem;font-family:inherit;text-align:right;outline:none;}
+.si-modal-row input[type=number]:focus{border-color:var(--primary);}
+.si-modal-row .si-del{background:none;border:none;color:var(--sub);cursor:pointer;font-size:1rem;
+  padding:2px 4px;border-radius:5px;}
+.si-modal-row .si-del:hover{background:#FFE8EE;color:var(--red);}
+.si-add-btn{background:var(--plight);border:none;color:var(--primary);border-radius:8px;
+  padding:7px 14px;font-size:.8rem;font-weight:700;cursor:pointer;width:100%;margin-top:4px;}
+.si-add-btn:hover{background:#DDD9FF;}
+.si-total-row{display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;
+  padding:6px 8px;background:#F8F9FF;border-radius:8px;margin-top:4px;}
+.si-total-row .si-total-val{color:var(--primary);}
+.plan-card.done{opacity:.65;}
+.plan-card.done::after{content:'✅ 완료';position:absolute;top:12px;right:12px;
+  background:#E5FAF1;color:#18A065;padding:3px 8px;border-radius:20px;font-size:.68rem;font-weight:700;}
+
+.plan-add-btn{background:linear-gradient(135deg,#6C63FF,#A78BFA);color:#fff;border:none;
+  border-radius:14px;padding:14px 20px;cursor:pointer;font-size:.9rem;font-weight:700;
+  display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(108,99,255,.3);
+  transition:all .2s;}
+.plan-add-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,99,255,.4);}
+
+/* ── PLAN MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;
+  display:none;backdrop-filter:blur(3px);align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:28px 28px 20px;width:520px;max-width:96vw;
+  max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-title{font-size:1.1rem;font-weight:800;margin-bottom:20px;display:flex;
+  align-items:center;justify-content:space-between;}
+.modal-close{background:var(--border);border:none;border-radius:50%;width:30px;height:30px;
+  cursor:pointer;font-size:.9rem;}
+.mrow{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;}
+.mrow label{font-size:.78rem;font-weight:700;color:var(--sub);}
+.mrow input,.mrow select,.mrow textarea{padding:9px 12px;border:2px solid var(--border);
+  border-radius:9px;font-size:.87rem;font-family:inherit;outline:none;transition:border .2s;width:100%;}
+.mrow input:focus,.mrow select:focus,.mrow textarea:focus{border-color:var(--primary);}
+.mrow textarea{resize:vertical;min-height:72px;}
+.modal-btns{display:flex;gap:10px;margin-top:18px;}
+.mbtn-save{flex:1;background:var(--primary);color:#fff;border:none;padding:11px;
+  border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;}
+.mbtn-cancel{background:var(--bg);color:var(--sub);border:none;padding:11px 18px;
+  border-radius:10px;font-size:.87rem;font-weight:600;cursor:pointer;}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;}
+.color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;
+  transition:all .2s;}
+.color-dot.on{border-color:var(--text);transform:scale(1.15);}
+
+/* ── PLAN SUMMARY CARDS ── */
+.plan-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+
+/* ── TIMELINE ── */
+.timeline-wrap{overflow-x:auto;}
+
+@media(max-width:960px){
+  .g4,.g3,.plan-grid,.plan-summary{grid-template-columns:repeat(2,1fr);}
+  .g2,.g2e,.trend-grid{grid-template-columns:1fr;}
+  .main{padding:14px 10px;}.hdr{padding:14px 12px;}.nav{padding:0 4px;}
+  .drawer{width:100%;right:-100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOCK SCREEN ════ -->
+<div id="lock_screen">
+  <div class="lock-box">
+    <div class="lock-icon">🏡</div>
+    <div class="lock-title">행복하게 살기 💝</div>
+    <div class="lock-sub" id="lock_msg">PIN을 입력하세요</div>
+    <div class="pin-dots" id="pin_dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="numpad" id="numpad"></div>
+    <div class="lock-hint" id="lock_hint"></div>
+  </div>
+</div>
+
+<!-- ════ SETTINGS MODAL ════ -->
+<div class="modal-bg" id="settings_modal_bg" onclick="handleSettingsBgClick(event)">
+  <div class="settings-modal">
+    <div class="modal-title">
+      <span>⚙️ 설정</span>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">💾 데이터 관리</div>
+      <button class="settings-btn" onclick="exportData()">
+        <span class="sb-icon">📤</span>
+        <div><div>데이터 내보내기 (JSON 백업)</div>
+        <div class="sb-desc">모든 가계부 데이터를 파일로 저장합니다</div></div>
+      </button>
+      <label class="settings-btn" style="cursor:pointer;">
+        <span class="sb-icon">📥</span>
+        <div><div>데이터 불러오기</div>
+        <div class="sb-desc">이전에 저장한 JSON 백업 파일을 불러옵니다</div></div>
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none;"/>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🔒 보안</div>
+      <button class="settings-btn" onclick="startChangePin()">
+        <span class="sb-icon">🔑</span>
+        <div><div>PIN 변경</div>
+        <div class="sb-desc">4자리 잠금 PIN을 변경합니다</div></div>
+      </button>
+      <button class="settings-btn" onclick="lockApp()">
+        <span class="sb-icon">🔒</span>
+        <div><div>지금 잠금</div>
+        <div class="sb-desc">앱을 잠그고 PIN 입력 화면으로 돌아갑니다</div></div>
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">⚠️ 초기화</div>
+      <button class="settings-btn danger" onclick="resetAllData()">
+        <span class="sb-icon">🗑️</span>
+        <div><div>모든 데이터 초기화</div>
+        <div class="sb-desc">저장된 모든 가계부 데이터를 삭제하고 초기화합니다</div></div>
+      </button>
+    </div>
+
+    <div style="margin-top:16px;padding:12px 14px;background:var(--bg);border-radius:10px;
+      font-size:.75rem;color:var(--sub);line-height:1.6;">
+      💡 <strong>데이터는 이 브라우저에만 저장됩니다.</strong><br>
+      다른 기기에서 사용하려면 <strong>데이터 내보내기</strong>로 백업 후 불러오기 하세요.
+    </div>
+  </div>
+</div>
+
+<!-- hidden import input -->
+<input type="file" id="import_file_input" accept=".json" onchange="importData(event)" style="display:none;"/>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<!-- DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="drawer-hdr">
+    <div>
+      <div class="drawer-title">✏️ 월 데이터 입력</div>
+      <div class="drawer-month-badge" id="drawer_month_badge">2026년 3월</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="igroup"><div class="igroup-title">💵 소득</div>
+      <div class="irow"><label>명길 월급</label><input id="i_mg_income" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>진경 월급</label><input id="i_jk_income" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>이자·기타소득</label><input id="i_interest" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">🔒 고정지출</div>
+      <div class="irow"><label>전세대출이자</label><input id="i_rent_int" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>아파트관리비</label><input id="i_apt" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>통신비</label><input id="i_telecom" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>정수기 구독료</label><input id="i_water" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>마통이자</label><input id="i_credit_int" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>자동차 할부금</label><input id="i_car_inst" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>교통비</label><input id="i_transport" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">📋 변동지출 계획</div>
+      <div class="irow"><label>식비</label><input id="i_food" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>생활용품비</label><input id="i_daily" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>경조사비</label><input id="i_event" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>비상금</label><input id="i_emerg" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>여행비</label><input id="i_travel" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>십일조</label><input id="i_tithe" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">👨 명길 용돈</div>
+      <div class="irow"><label>휴대폰</label><input id="i_mg_phone" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>보험</label><input id="i_mg_ins" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>고정회비</label><input id="i_mg_fee" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>구내식당비</label><input id="i_mg_lunch" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>개인용돈</label><input id="i_mg_pocket" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">👩 진경 용돈</div>
+      <div class="irow"><label>휴대폰</label><input id="i_jk_phone" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>보험</label><input id="i_jk_ins" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>고정회비</label><input id="i_jk_fee" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>개인용돈</label><input id="i_jk_pocket" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">📈 명길 자산</div>
+      <div class="irow"><label>보험</label><input id="i_mg_ins_a" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>청약</label><input id="i_mg_ck" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>장기적금</label><input id="i_mg_ls" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>단기적금</label><input id="i_mg_ss" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>국내주식</label><input id="i_mg_stock" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>IRP</label><input id="i_mg_irp" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>코인</label><input id="i_mg_coin" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">📊 진경 자산</div>
+      <div class="irow"><label>금</label><input id="i_jk_gold" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>청약</label><input id="i_jk_ck" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>교직원장기저축</label><input id="i_jk_ls" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>단기적금</label><input id="i_jk_ss" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>비상장주식</label><input id="i_jk_unlisted" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>주식CB</label><input id="i_jk_cb" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>연금저축·IRP</label><input id="i_jk_pension" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">🏦 대출 잔여금액</div>
+      <div class="irow"><label>마이너스통장</label><input id="i_ln_credit" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>적금담보대출</label><input id="i_ln_saving" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>교직원공제회</label><input id="i_ln_teacher" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>자동차할부</label><input id="i_ln_car" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">💰 여유자금 배분</div>
+      <div class="irow"><label>대출상환</label><input id="i_repay" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>청년도약적금</label><input id="i_youth" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>신한은행 적금</label><input id="i_shinhan" type="number"/><span class="unit">원</span></div>
+      <div class="irow"><label>우리은행 적금</label><input id="i_woori" type="number"/><span class="unit">원</span></div>
+    </div>
+    <div class="igroup"><div class="igroup-title">🎯 연간 목표</div>
+      <div class="irow"><label>연간 저축 목표</label><input id="i_annual_goal" type="number"/><span class="unit">원</span></div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-cancel" onclick="closeDrawer()">취소</button>
+    <button class="btn-save" onclick="saveMonth()">✅ 저장</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="title">🏡 행복하게 살기 💝</div>
+    <div class="sub">명길 &amp; 진경의 가계부 대시보드</div>
+    <div class="month-nav">
+      <button class="mnav-btn" id="btn_prev" onclick="prevMonth()">◀</button>
+      <span class="month-display" id="month_display">–</span>
+      <button class="mnav-btn" id="btn_next" onclick="nextMonth()">▶</button>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="hdr-nums">
+      총 자산 <strong id="hdr_asset">–</strong>&nbsp;&nbsp;
+      순 자산 <strong id="hdr_net">–</strong>
+    </div>
+    <div class="hdr-btns">
+      <button class="hbtn add" onclick="addNewMonth()">➕ 새 달 추가</button>
+      <button class="hbtn" onclick="openDrawer()">✏️ 이달 수정</button>
+      <button class="hbtn" onclick="openSettings()" title="설정 / 데이터 백업">⚙️</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="ntab on"  onclick="show('overview',this)">📊 전체 요약</div>
+  <div class="ntab"     onclick="show('spending',this)">💸 지출 계획</div>
+  <div class="ntab"     onclick="show('portfolio',this)">📈 자산 현황</div>
+  <div class="ntab"     onclick="show('savings',this)">💰 수입·저축</div>
+  <div class="ntab"     onclick="show('debt',this)">🏦 대출 현황</div>
+  <div class="ntab"     onclick="show('trend',this)">📅 월별 추이</div>
+  <div class="ntab"     onclick="show('plans',this)">📌 대형 지출 계획</div>
+</nav>
+
+<div class="main">
+
+<!-- ══ 전체요약 ══ -->
+<div class="sec on" id="overview">
+  <div class="g4">
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">💼</div><div>
+      <div class="sclbl">총 자산</div><div class="scval" style="color:var(--primary);" id="s_asset">–</div>
+      <div class="scchg" id="s_asset_chg"></div></div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">💵</div><div>
+      <div class="sclbl">이달 수입</div><div class="scval" style="color:var(--green);" id="s_income">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFE8EE;">💸</div><div>
+      <div class="sclbl">이달 생활비</div><div class="scval" style="color:var(--red);" id="s_expense">–</div>
+      <div class="scchg" id="s_exp_chg"></div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFF3E0;">🐣</div><div>
+      <div class="sclbl">이달 저축</div><div class="scval" style="color:var(--orange);" id="s_saving">–</div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">이달 지출 구성</span><span class="cbdg" id="ov_badge">–</span></div>
+      <canvas id="c_ov_bar" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">자산 구성</span><span class="cbdg">현재</span></div>
+      <canvas id="c_ov_pie" height="185"></canvas>
+      <div class="lgnd" id="lgnd_ov"></div>
+    </div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <div class="ch"><span class="ct">지출 비중</span><span class="cbdg">전체</span></div>
+      <div class="pw" id="ov_prog"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">연간 저축 목표</span></div>
+      <div class="gauge-wrap">
+        <div class="gauge-ring" id="gauge_ring">
+          <div class="gauge-inner">
+            <div class="gpct" id="gauge_pct">–</div>
+            <div class="glbl">달성</div>
+          </div>
+        </div>
+        <div style="font-size:.8rem;color:var(--sub);">목표 <strong id="g_goal">–</strong></div>
+        <div style="font-size:.8rem;color:var(--sub);margin-top:3px;">이달 저축 <strong style="color:var(--primary);" id="g_save">–</strong></div>
+        <div style="font-size:.8rem;color:var(--sub);margin-top:3px;">남은 목표 <strong style="color:var(--red);" id="g_remain">–</strong></div>
+      </div>
+      <div class="dvr"><div class="dvrline"></div><div class="dvrlbl">수입 구성</div><div class="dvrline"></div></div>
+      <canvas id="c_income_pie" height="135"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 지출계획 ══ -->
+<div class="sec" id="spending">
+  <div class="g3">
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">📌</div><div>
+      <div class="sclbl">고정지출</div><div class="scval" style="color:var(--primary);" id="sp_fixed">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFE8EE;">📋</div><div>
+      <div class="sclbl">변동지출</div><div class="scval" style="color:var(--red);" id="sp_var">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">💵</div><div>
+      <div class="sclbl">생활비 합계</div><div class="scval" style="color:var(--green);" id="sp_total">–</div></div></div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <div class="ch"><span class="ct">🔒 고정지출</span></div>
+      <table><thead><tr><th>항목</th><th class="r">금액</th></tr></thead>
+      <tbody id="tb_fixed"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">📋 변동지출 계획</span></div>
+      <table><thead><tr><th>항목</th><th class="r">금액</th></tr></thead>
+      <tbody id="tb_var"></tbody></table>
+    </div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <div class="ch"><span class="ct">👨 명길 용돈</span><span class="cbdg" id="sp_mg_ttl">–</span></div>
+      <table><thead><tr><th>항목</th><th class="r">금액</th></tr></thead>
+      <tbody id="tb_mg_pocket"></tbody></table>
+      <canvas id="c_mg_pie" height="140" style="margin-top:12px;"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">👩 진경 용돈</span><span class="cbdg" id="sp_jk_ttl">–</span></div>
+      <table><thead><tr><th>항목</th><th class="r">금액</th></tr></thead>
+      <tbody id="tb_jk_pocket"></tbody></table>
+      <canvas id="c_jk_pie" height="140" style="margin-top:12px;"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct">카테고리별 지출 비중</span></div>
+    <canvas id="c_spend_hbar" height="130"></canvas>
+  </div>
+</div>
+
+<!-- ══ 자산 현황 ══ -->
+<div class="sec" id="portfolio">
+  <div class="g3">
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">💼</div><div>
+      <div class="sclbl">총 자산</div><div class="scval" style="color:var(--primary);" id="p_total">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">👨</div><div>
+      <div class="sclbl">명길 자산</div><div class="scval" style="color:var(--green);" id="p_mg">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFF3E0;">👩</div><div>
+      <div class="sclbl">진경 자산</div><div class="scval" style="color:var(--orange);" id="p_jk">–</div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">명길 vs 진경 자산 비교</span></div>
+      <canvas id="c_port_bar" height="225"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">전체 자산 배분</span></div>
+      <canvas id="c_port_pie" height="195"></canvas>
+      <div class="lgnd" id="lgnd_port"></div>
+    </div>
+  </div>
+  <div class="dvr"><div class="dvrlbl">👨 명길 자산 상세</div><div class="dvrline"></div></div>
+  <div class="card" style="margin-bottom:18px;">
+    <table><thead><tr><th>항목</th><th class="r">금액</th><th>전월대비</th></tr></thead>
+    <tbody id="tb_mg_asset"></tbody></table>
+  </div>
+  <div class="dvr"><div class="dvrlbl">👩 진경 자산 상세</div><div class="dvrline"></div></div>
+  <div class="card">
+    <table><thead><tr><th>항목</th><th class="r">금액</th><th>메모</th></tr></thead>
+    <tbody id="tb_jk_asset"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ 수입·저축 ══ -->
+<div class="sec" id="savings">
+  <div class="g4">
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">💵</div><div>
+      <div class="sclbl">총 수입</div><div class="scval" style="color:var(--primary);" id="sv_income">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">👨</div><div>
+      <div class="sclbl">명길 수입</div><div class="scval" style="color:var(--green);" id="sv_mg">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFF3E0;">👩</div><div>
+      <div class="sclbl">진경 수입</div><div class="scval" style="color:var(--orange);" id="sv_jk">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFE8EE;">🐣</div><div>
+      <div class="sclbl">이달 저축</div><div class="scval" style="color:var(--red);" id="sv_save">–</div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">수입 → 지출 → 저축</span></div>
+      <canvas id="c_sv_flow" height="215"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">여유자금 배분</span></div>
+      <table><thead><tr><th>항목</th><th class="r">금액</th><th>조건</th></tr></thead>
+      <tbody id="tb_repay"></tbody></table>
+      <div class="dvr"><div class="dvrline"></div><div class="dvrlbl">저축률</div><div class="dvrline"></div></div>
+      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--primary);" id="sv_rate">–</div>
+          <div style="font-size:.72rem;color:var(--sub);">수입 대비 저축률</div>
+        </div>
+        <div style="flex:1;min-width:140px;" id="sv_prog"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 대출현황 ══ -->
+<div class="sec" id="debt">
+  <div class="g4">
+    <div class="sc"><div class="sci" style="background:#FFE8EE;">💳</div><div>
+      <div class="sclbl">총 부채</div><div class="scval" style="color:var(--red);" id="d_total">–</div>
+      <div class="scchg" id="d_total_chg"></div></div></div>
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">🏦</div><div>
+      <div class="sclbl">마이너스통장</div><div class="scval" style="color:var(--primary);" id="d_credit">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#FFF3E0;">🚗</div><div>
+      <div class="sclbl">자동차 할부</div><div class="scval" style="color:var(--orange);" id="d_car">–</div></div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">📚</div><div>
+      <div class="sclbl">교직원공제회</div><div class="scval" style="color:var(--green);" id="d_teacher">–</div></div></div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <div class="ch"><span class="ct">대출 구성</span></div>
+      <canvas id="c_debt_bar" height="215"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">부채 vs 순자산</span></div>
+      <canvas id="c_debt_pie" height="195"></canvas>
+      <div class="lgnd" id="lgnd_debt"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct">대출 상세</span></div>
+    <table><thead><tr><th>기관</th><th class="r">잔여금액</th><th class="r">금리</th><th>비고</th></tr></thead>
+    <tbody id="tb_debt"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ 월별 추이 ══ -->
+<div class="sec" id="trend">
+  <div style="margin-bottom:16px;">
+    <div style="font-size:.8rem;color:var(--sub);margin-bottom:8px;font-weight:600;">📅 기록된 월</div>
+    <div class="month-list" id="trend_month_list"></div>
+  </div>
+
+  <!-- 자산 추이 -->
+  <div class="card" style="margin-bottom:18px;">
+    <div class="ch"><span class="ct">💼 총자산 · 순자산 · 총부채 추이</span><span class="cbdg">월별</span></div>
+    <canvas id="c_tr_asset" height="200"></canvas>
+  </div>
+
+  <div class="trend-grid">
+    <!-- 수입/지출/저축 -->
+    <div class="card">
+      <div class="ch"><span class="ct">💵 수입 · 생활비 · 저축 추이</span></div>
+      <canvas id="c_tr_income" height="220"></canvas>
+    </div>
+    <!-- 저축률 -->
+    <div class="card">
+      <div class="ch"><span class="ct">📐 저축률 추이</span></div>
+      <canvas id="c_tr_rate" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="trend-grid">
+    <!-- 대출 감소 -->
+    <div class="card">
+      <div class="ch"><span class="ct">🏦 대출 잔액 변화</span></div>
+      <canvas id="c_tr_debt" height="220"></canvas>
+    </div>
+    <!-- 자산 구성 변화 -->
+    <div class="card">
+      <div class="ch"><span class="ct">📊 자산 구성 변화</span></div>
+      <canvas id="c_tr_stack" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- 월별 요약 테이블 -->
+  <div class="card">
+    <div class="ch"><span class="ct">📋 월별 핵심 지표 요약</span></div>
+    <div style="overflow-x:auto;">
+      <table id="tb_trend_summary" style="min-width:700px;">
+        <thead>
+          <tr>
+            <th>월</th><th class="r">총 수입</th><th class="r">생활비</th>
+            <th class="r">저축</th><th class="r">저축률</th>
+            <th class="r">총 자산</th><th class="r">총 부채</th><th class="r">순 자산</th>
+          </tr>
+        </thead>
+        <tbody id="tb_trend_body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 대형 지출 계획 ══ -->
+<div class="sec" id="plans">
+
+  <!-- 요약 카드 -->
+  <div class="plan-summary" id="plan_summary_cards"></div>
+
+  <!-- 타이틀 + 추가 버튼 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div>
+      <div style="font-size:1rem;font-weight:800;">예정된 대형 지출</div>
+      <div style="font-size:.75rem;color:var(--sub);margin-top:2px;">클릭해서 수정 · 삭제 가능합니다</div>
+    </div>
+    <button class="plan-add-btn" onclick="openPlanModal()">➕ 계획 추가</button>
+  </div>
+
+  <!-- 카테고리 필터 -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;" id="plan_filter_row">
+    <div class="mbadge cur" onclick="filterPlans('all',this)" data-cat="all">전체</div>
+    <div class="mbadge" onclick="filterPlans('결혼·신혼',this)" data-cat="결혼·신혼">💍 결혼·신혼</div>
+    <div class="mbadge" onclick="filterPlans('출산·육아',this)" data-cat="출산·육아">👶 출산·육아</div>
+    <div class="mbadge" onclick="filterPlans('주택·이사',this)" data-cat="주택·이사">🏠 주택·이사</div>
+    <div class="mbadge" onclick="filterPlans('여행·여가',this)" data-cat="여행·여가">✈️ 여행·여가</div>
+    <div class="mbadge" onclick="filterPlans('차량·교통',this)" data-cat="차량·교통">🚗 차량·교통</div>
+    <div class="mbadge" onclick="filterPlans('의료·건강',this)" data-cat="의료·건강">🏥 의료·건강</div>
+    <div class="mbadge" onclick="filterPlans('교육',this)" data-cat="교육">📚 교육</div>
+    <div class="mbadge" onclick="filterPlans('기타',this)" data-cat="기타">📦 기타</div>
+  </div>
+
+  <!-- 계획 카드 그리드 -->
+  <div class="plan-grid" id="plan_cards"></div>
+
+  <!-- 차트 2개 -->
+  <div class="g2e" style="margin-top:8px;">
+    <div class="card">
+      <div class="ch"><span class="ct">📊 목표 금액 vs 현재 저축</span></div>
+      <canvas id="c_plan_bar" height="230"></canvas>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">📅 실행 타임라인</span></div>
+      <canvas id="c_plan_timeline" height="230"></canvas>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /main -->
+
+<!-- PLAN MODAL -->
+<div class="modal-bg" id="plan_modal_bg" onclick="handleModalBgClick(event)">
+  <div class="modal" id="plan_modal">
+    <div class="modal-title">
+      <span id="plan_modal_title">📌 계획 추가</span>
+      <button class="modal-close" onclick="closePlanModal()">✕</button>
+    </div>
+    <input type="hidden" id="pm_id"/>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="mrow" style="grid-column:1/-1;">
+        <label>계획 이름 *</label>
+        <input id="pm_name" type="text" placeholder="예: 신혼여행, 첫째 출산 준비"/>
+      </div>
+      <div class="mrow">
+        <label>카테고리</label>
+        <select id="pm_cat">
+          <option>결혼·신혼</option><option>출산·육아</option><option>주택·이사</option>
+          <option>여행·여가</option><option>차량·교통</option><option>의료·건강</option>
+          <option>교육</option><option>기타</option>
+        </select>
+      </div>
+      <div class="mrow">
+        <label>이모지</label>
+        <input id="pm_emoji" type="text" placeholder="💍" maxlength="4" style="font-size:1.4rem;text-align:center;"/>
+      </div>
+      <div class="mrow">
+        <label>목표 금액 (원) *</label>
+        <input id="pm_amount" type="number" placeholder="5000000"/>
+      </div>
+      <div class="mrow">
+        <label>현재 모인 금액 (원)</label>
+        <input id="pm_saved" type="number" placeholder="0"/>
+      </div>
+      <div class="mrow">
+        <label>목표 시기</label>
+        <input id="pm_date" type="month"/>
+      </div>
+      <div class="mrow">
+        <label>우선순위</label>
+        <select id="pm_priority">
+          <option value="high">🔴 높음</option>
+          <option value="mid" selected>🟡 보통</option>
+          <option value="low">🟢 낮음</option>
+        </select>
+      </div>
+      <div class="mrow" style="grid-column:1/-1;">
+        <label>카드 색상</label>
+        <div class="color-row" id="pm_color_row">
+          <div class="color-dot on" style="background:#6C63FF;" data-color="#6C63FF" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#2ECC8A;" data-color="#2ECC8A" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#FF9F43;" data-color="#FF9F43" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#FF5C7A;" data-color="#FF5C7A" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#3D9FFF;" data-color="#3D9FFF" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#A78BFA;" data-color="#A78BFA" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#26C6DA;" data-color="#26C6DA" onclick="pickColor(this)"></div>
+          <div class="color-dot" style="background:#F9CA24;" data-color="#F9CA24" onclick="pickColor(this)"></div>
+        </div>
+      </div>
+      <!-- 세부 지출 항목 -->
+      <div class="mrow" style="grid-column:1/-1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label style="margin:0;">📋 세부 지출 항목</label>
+          <span style="font-size:.7rem;color:var(--sub);">항목별 금액 합계가 목표 금액의 참고가 됩니다</span>
+        </div>
+        <div id="pm_si_list"></div>
+        <button class="si-add-btn" type="button" onclick="addSubItemRow()">+ 항목 추가</button>
+        <div class="si-total-row" id="pm_si_total" style="display:none;">
+          <span>항목 합계</span>
+          <span class="si-total-val" id="pm_si_total_val">₩0</span>
+        </div>
+      </div>
+
+      <div class="mrow" style="grid-column:1/-1;">
+        <label>메모 / 세부 계획</label>
+        <textarea id="pm_notes" placeholder="세부 내용을 자유롭게 적어두세요..."></textarea>
+      </div>
+      <div class="mrow" style="grid-column:1/-1;">
+        <label>상태</label>
+        <select id="pm_status">
+          <option value="planning">🗓 계획 중</option>
+          <option value="saving">💰 저축 중</option>
+          <option value="done">✅ 완료</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="mbtn-cancel" onclick="closePlanModal()">취소</button>
+      <button class="mbtn-save" onclick="savePlan()">✅ 저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  SEED DATA (기본 6개월치 샘플 데이터)
+// ════════════════════════════════════════════
+const SEED = {
+  /* ── 2025년 6월 ─────────────────────────── */
+  '2025-06':{
+    mg_income:3400000,jk_income:7100000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:155000,car_inst:600000,transport:270000,
+    food:450000,daily:100000,event:200000,emerg:100000,travel:200000,tithe:1050000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:8200000,mg_ck:6730000,mg_ls:2000000,mg_ss:0,mg_stock:32000000,mg_irp:1800000,mg_coin:4500000,
+    jk_gold:2000000,jk_ck:3240000,jk_ls:8000000,jk_ss:0,jk_unlisted:10000000,jk_cb:10500000,jk_pension:5500000,
+    ln_credit:35000000,ln_saving:9200000,ln_teacher:28255060,ln_car:31600000,
+    repay:3200000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 7월 ─────────────────────────── */
+  '2025-07':{
+    mg_income:3400000,jk_income:7200000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:152000,car_inst:600000,transport:270000,
+    food:440000,daily:100000,event:100000,emerg:100000,travel:500000,tithe:1060000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:8350000,mg_ck:6730000,mg_ls:2600000,mg_ss:0,mg_stock:40000000,mg_irp:1950000,mg_coin:4600000,
+    jk_gold:2200000,jk_ck:3260000,jk_ls:8800000,jk_ss:0,jk_unlisted:12000000,jk_cb:10500000,jk_pension:5800000,
+    ln_credit:34000000,ln_saving:9000000,ln_teacher:28255060,ln_car:31000000,
+    repay:3300000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 8월 ─────────────────────────── */
+  '2025-08':{
+    mg_income:3450000,jk_income:7350000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:148000,car_inst:600000,transport:270000,
+    food:430000,daily:100000,event:150000,emerg:100000,travel:800000,tithe:1080000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:8600000,mg_ck:6730000,mg_ls:3500000,mg_ss:0,mg_stock:50000000,mg_irp:2200000,mg_coin:4700000,
+    jk_gold:2800000,jk_ck:3290000,jk_ls:9600000,jk_ss:0,jk_unlisted:18000000,jk_cb:10500000,jk_pension:6000000,
+    ln_credit:32500000,ln_saving:8500000,ln_teacher:28255060,ln_car:30400000,
+    repay:3400000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 9월 ─────────────────────────── */
+  '2025-09':{
+    mg_income:3450000,jk_income:7400000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:146000,car_inst:600000,transport:270000,
+    food:420000,daily:100000,event:300000,emerg:100000,travel:300000,tithe:1090000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:8900000,mg_ck:6730000,mg_ls:4500000,mg_ss:0,mg_stock:57000000,mg_irp:2600000,mg_coin:5000000,
+    jk_gold:3000000,jk_ck:3380000,jk_ls:11000000,jk_ss:0,jk_unlisted:25000000,jk_cb:10500000,jk_pension:6800000,
+    ln_credit:31500000,ln_saving:7500000,ln_teacher:28255060,ln_car:30000000,
+    repay:3500000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 10월 ────────────────────────── */
+  '2025-10':{
+    mg_income:3500000,jk_income:7500000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:145000,car_inst:600000,transport:270000,
+    food:450000,daily:100000,event:100000,emerg:100000,travel:400000,tithe:1150000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:9200000,mg_ck:6730000,mg_ls:5200000,mg_ss:0,mg_stock:65000000,mg_irp:2800000,mg_coin:5100000,
+    jk_gold:3200000,jk_ck:3460000,jk_ls:12300000,jk_ss:0,jk_unlisted:30000000,jk_cb:10500000,jk_pension:7400000,
+    ln_credit:30500000,ln_saving:6700000,ln_teacher:28255060,ln_car:29600000,
+    repay:3500000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 11월 ────────────────────────── */
+  '2025-11':{
+    mg_income:3500000,jk_income:7700000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:140000,car_inst:600000,transport:270000,
+    food:430000,daily:100000,event:300000,emerg:100000,travel:300000,tithe:1120000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:9600000,mg_ck:6730000,mg_ls:5900000,mg_ss:0,mg_stock:82000000,mg_irp:2950000,mg_coin:5100000,
+    jk_gold:3500000,jk_ck:3490000,jk_ls:13200000,jk_ss:0,jk_unlisted:35000000,jk_cb:10500000,jk_pension:7900000,
+    ln_credit:29500000,ln_saving:6400000,ln_teacher:28255060,ln_car:29000000,
+    repay:3900000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2025년 12월 ────────────────────────── */
+  '2025-12':{
+    mg_income:3550000,jk_income:7800000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:138000,car_inst:600000,transport:270000,
+    food:420000,daily:120000,event:500000,emerg:100000,travel:600000,tithe:1130000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:9800000,mg_ck:6730000,mg_ls:6500000,mg_ss:0,mg_stock:100000000,mg_irp:3100000,mg_coin:5200000,
+    jk_gold:3800000,jk_ck:3530000,jk_ls:13900000,jk_ss:0,jk_unlisted:40000000,jk_cb:10500000,jk_pension:8200000,
+    ln_credit:28500000,ln_saving:6100000,ln_teacher:28255060,ln_car:28400000,
+    repay:4000000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2026년 1월 ─────────────────────────── */
+  '2026-01':{
+    mg_income:3600000,jk_income:8000000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:132000,car_inst:600000,transport:270000,
+    food:410000,daily:100000,event:200000,emerg:100000,travel:300000,tithe:1100000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:10000000,mg_ck:6730000,mg_ls:7000000,mg_ss:1000000,mg_stock:120000000,mg_irp:3300000,mg_coin:5200000,
+    jk_gold:4100000,jk_ck:3570000,jk_ls:14600000,jk_ss:1200000,jk_unlisted:45000000,jk_cb:10500000,jk_pension:8700000,
+    ln_credit:27500000,ln_saving:5800000,ln_teacher:28255060,ln_car:27800000,
+    repay:4200000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2026년 2월 ─────────────────────────── */
+  '2026-02':{
+    mg_income:3620000,jk_income:8000000,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:126000,car_inst:600000,transport:270000,
+    food:450000,daily:100000,event:100000,emerg:100000,travel:200000,tithe:1190000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:10200000,mg_ck:6730000,mg_ls:7200000,mg_ss:1600000,mg_stock:135000000,mg_irp:3500000,mg_coin:5300000,
+    jk_gold:4300000,jk_ck:3600000,jk_ls:15300000,jk_ss:2000000,jk_unlisted:48000000,jk_cb:10500000,jk_pension:9100000,
+    ln_credit:26500000,ln_saving:5600000,ln_teacher:28255060,ln_car:27200000,
+    repay:4300000,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  },
+  /* ── 2026년 3월 (실제 CSV 데이터) ─────────── */
+  '2026-03':{
+    mg_income:3658690,jk_income:8054812,interest:0,
+    rent_int:480000,apt:500000,telecom:38500,water:15000,credit_int:120000,car_inst:600000,transport:270000,
+    food:400000,daily:100000,event:200000,emerg:100000,travel:200000,tithe:1100000,
+    mg_phone:86000,mg_ins:205000,mg_fee:140000,mg_lunch:140000,mg_pocket:400000,
+    jk_phone:65000,jk_ins:200000,jk_fee:180000,jk_pocket:600000,
+    mg_ins_a:10413925,mg_ck:6730000,mg_ls:7650000,mg_ss:1850000,mg_stock:149814493,mg_irp:3604428,mg_coin:5309253,
+    jk_gold:4571250,jk_ck:3620000,jk_ls:16077630,jk_ss:2400000,jk_unlisted:50000000,jk_cb:10500000,jk_pension:9540784,
+    ln_credit:25621715,ln_saving:5340000,ln_teacher:28255060,ln_car:26508222,
+    repay:4474002,youth:500000,shinhan:300000,woori:300000,
+    annual_goal:45000000
+  }
+};
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let HISTORY = {};
+let CURRENT = '2026-03';
+const LS_KEY = 'kakaebu_v3';
+
+function loadHistory(){
+  try{
+    const s = localStorage.getItem(LS_KEY);
+    if(s){ HISTORY = JSON.parse(s); }
+    else { HISTORY = JSON.parse(JSON.stringify(SEED)); }
+  } catch(e){ HISTORY = JSON.parse(JSON.stringify(SEED)); }
+}
+function saveHistory(){
+  localStorage.setItem(LS_KEY, JSON.stringify(HISTORY));
+}
+
+function sortedMonths(){ return Object.keys(HISTORY).sort(); }
+function D(){ return HISTORY[CURRENT] || {}; }
+
+// ════════════════════════════════════════════
+//  COMPUTED
+// ════════════════════════════════════════════
+function calc(d){
+  const mg_pocket = (d.mg_phone||0)+(d.mg_ins||0)+(d.mg_fee||0)+(d.mg_lunch||0)+(d.mg_pocket||0);
+  const jk_pocket = (d.jk_phone||0)+(d.jk_ins||0)+(d.jk_fee||0)+(d.jk_pocket||0);
+  const pocket    = mg_pocket + jk_pocket;
+  const fixed     = (d.rent_int||0)+(d.apt||0)+(d.telecom||0)+(d.water||0)+(d.credit_int||0)+(d.car_inst||0)+(d.transport||0);
+  const variable  = (d.food||0)+(d.daily||0)+(d.event||0)+(d.emerg||0)+(d.travel||0)+(d.tithe||0)+pocket;
+  const living    = fixed + variable;
+  const income    = (d.mg_income||0)+(d.jk_income||0)+(d.interest||0);
+  const saving    = (d.repay||0)+(d.youth||0)+(d.shinhan||0)+(d.woori||0);
+  const mg_asset  = (d.mg_ins_a||0)+(d.mg_ck||0)+(d.mg_ls||0)+(d.mg_ss||0)+(d.mg_stock||0)+(d.mg_irp||0)+(d.mg_coin||0);
+  const jk_asset  = (d.jk_gold||0)+(d.jk_ck||0)+(d.jk_ls||0)+(d.jk_ss||0)+(d.jk_unlisted||0)+(d.jk_cb||0)+(d.jk_pension||0);
+  const total_asset = mg_asset + jk_asset;
+  const total_debt  = (d.ln_credit||0)+(d.ln_saving||0)+(d.ln_teacher||0)+(d.ln_car||0);
+  const net_asset   = total_asset - total_debt;
+  const save_rate   = income>0 ? saving/income*100 : 0;
+  const goal_pct    = (d.annual_goal||0)>0 ? saving/(d.annual_goal)*100 : 0;
+  return {mg_pocket,jk_pocket,pocket,fixed,variable,living,income,saving,
+    mg_asset,jk_asset,total_asset,total_debt,net_asset,save_rate,goal_pct};
+}
+
+// ════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════
+const W  = v => '₩'+Math.round(v||0).toLocaleString('ko-KR');
+const M  = v => { v=v||0; if(v>=100000000) return '₩'+(v/100000000).toFixed(2)+'억'; if(v>=10000) return '₩'+(v/10000).toFixed(0)+'만'; return W(v); };
+const ML = v => { v=v||0; if(v>=100000000) return (v/100000000).toFixed(2)+'억'; if(v>=10000) return (v/10000).toFixed(0)+'만'; return v.toLocaleString(); };
+const P  = ['#6C63FF','#2ECC8A','#FF9F43','#FF5C7A','#3D9FFF','#A78BFA','#26C6DA','#F9CA24','#FD7272','#A29BFE'];
+
+let CHARTS = {};
+function mkChart(id,type,labels,datasets,opts={}){
+  if(CHARTS[id]){ CHARTS[id].destroy(); delete CHARTS[id]; }
+  const ctx=document.getElementById(id); if(!ctx) return;
+  CHARTS[id]=new Chart(ctx,{type,data:{labels,datasets},
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11}}}},maintainAspectRatio:true,...opts}});
+}
+
+function fmtMonth(ym){ const [y,m]=ym.split('-'); return `${y}년 ${parseInt(m)}월`; }
+function deltaChip(cur,prev){
+  if(prev===undefined||prev===null) return '';
+  const diff=cur-prev, pct=(prev!==0?diff/prev*100:0);
+  if(Math.abs(diff)<1000) return `<span class="delta zero">–</span>`;
+  const sign=diff>0?'+':'', cls=diff>0?'pos':'neg';
+  return `<span class="delta ${cls}">${sign}${ML(Math.abs(diff))}</span>`;
+}
+
+// ════════════════════════════════════════════
+//  RENDER — CURRENT MONTH
+// ════════════════════════════════════════════
+function render(){
+  const d = D();
+  const c = calc(d);
+  const months = sortedMonths();
+  const idx = months.indexOf(CURRENT);
+  const prevM = idx>0 ? HISTORY[months[idx-1]] : null;
+  const prevC = prevM ? calc(prevM) : null;
+
+  // header
+  document.getElementById('month_display').textContent = fmtMonth(CURRENT);
+  document.getElementById('btn_prev').disabled = (idx===0);
+  document.getElementById('btn_next').disabled = (idx===months.length-1);
+  document.getElementById('hdr_asset').textContent = M(c.total_asset);
+  document.getElementById('hdr_net').textContent   = M(c.net_asset);
+
+  // ── 전체 요약
+  const [,mo]=CURRENT.split('-');
+  document.getElementById('ov_badge').textContent = parseInt(mo)+'월';
+  document.getElementById('s_asset').textContent   = M(c.total_asset);
+  document.getElementById('s_income').textContent  = W(c.income);
+  document.getElementById('s_expense').textContent = W(c.living);
+  document.getElementById('s_saving').textContent  = W(c.saving);
+
+  if(prevC){
+    const ad=c.total_asset-prevC.total_asset, asign=ad>=0?'+':'';
+    document.getElementById('s_asset_chg').innerHTML = `<span class="${ad>=0?'dn':'up'}">${asign}${ML(Math.abs(ad))}</span>`;
+    const ed=c.living-prevC.living, esign=ed>=0?'+':'';
+    document.getElementById('s_exp_chg').innerHTML = `<span class="${ed>=0?'up':'dn'}">${esign}${ML(Math.abs(ed))}</span>`;
+  } else {
+    document.getElementById('s_asset_chg').textContent='';
+    document.getElementById('s_exp_chg').textContent='';
+  }
+
+  mkChart('c_ov_bar','bar',
+    ['고정지출','식비·생활용품','용돈 합산','십일조','여행·경조·비상금'],
+    [{label:'금액',data:[c.fixed,d.food+d.daily,c.pocket,d.tithe,(d.travel||0)+(d.event||0)+(d.emerg||0)],
+      backgroundColor:['#6C63FF','#2ECC8A','#FF9F43','#FF5C7A','#3D9FFF'],borderRadius:6}],
+    {plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}}
+  );
+
+  const savSum=(d.mg_ls||0)+(d.mg_ss||0)+(d.jk_ls||0)+(d.jk_ss||0);
+  const insSum=(d.mg_ins_a||0)+(d.mg_irp||0)+(d.jk_pension||0);
+  const etcSum=(d.mg_ck||0)+(d.jk_ck||0)+(d.jk_gold||0)+(d.mg_coin||0)+(d.jk_cb||0);
+  const pieLabels=['국내주식','비상장주식','예·적금','보험·연금','청약·금·코인'];
+  const pieData=[d.mg_stock||0,d.jk_unlisted||0,savSum,insSum,etcSum];
+  mkChart('c_ov_pie','doughnut',pieLabels,
+    [{data:pieData,backgroundColor:P,borderWidth:0,hoverOffset:5}],
+    {cutout:'63%',plugins:{legend:{display:false}}}
+  );
+  document.getElementById('lgnd_ov').innerHTML=pieLabels.map((l,i)=>
+    `<div class="li"><div class="ldot" style="background:${P[i]};"></div><span class="lname">${l}</span><span class="lpct">${M(pieData[i])}</span></div>`).join('');
+
+  mkChart('c_income_pie','doughnut',['진경 수입','명길 수입'],
+    [{data:[d.jk_income||0,d.mg_income||0],backgroundColor:['#FF9F43','#6C63FF'],borderWidth:0}],
+    {cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+  );
+
+  const pct=Math.min(100,c.goal_pct);
+  document.getElementById('gauge_ring').style.background=`conic-gradient(#6C63FF 0% ${pct}%,#E4E8F4 ${pct}% 100%)`;
+  document.getElementById('gauge_pct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('g_goal').textContent=W(d.annual_goal||0);
+  document.getElementById('g_save').textContent=W(c.saving);
+  document.getElementById('g_remain').textContent=W(Math.max(0,(d.annual_goal||0)-c.saving));
+
+  const progItems=[
+    {l:'🚗 자동차 할부',v:d.car_inst||0,c:'#6C63FF'},
+    {l:'🏢 아파트관리비',v:d.apt||0,c:'#6C63FF'},
+    {l:'🏠 전세대출이자',v:d.rent_int||0,c:'#6C63FF'},
+    {l:'💰 용돈 합계',v:c.pocket,c:'#FF9F43'},
+    {l:'⛪ 십일조',v:d.tithe||0,c:'#FF5C7A'},
+    {l:'🍚 식비',v:d.food||0,c:'#2ECC8A'},
+    {l:'🚇 교통비',v:d.transport||0,c:'#A78BFA'},
+    {l:'✈️ 여행비',v:d.travel||0,c:'#3D9FFF'},
+  ];
+  document.getElementById('ov_prog').innerHTML=progItems.map(e=>{
+    const p=c.living>0?Math.min(100,e.v/c.living*100):0;
+    return `<div><div class="pt"><span class="plbl">${e.l}</span><span class="pval">${W(e.v)}</span></div>
+      <div class="pbar"><div class="pfill" style="width:${p}%;background:${e.c};"></div></div></div>`;
+  }).join('');
+
+  // ── 지출계획
+  document.getElementById('sp_fixed').textContent=W(c.fixed);
+  document.getElementById('sp_var').textContent=W(c.variable);
+  document.getElementById('sp_total').textContent=W(c.living);
+  document.getElementById('tb_fixed').innerHTML=[
+    ['전세대출이자',d.rent_int],['아파트관리비',d.apt],['통신비',d.telecom],
+    ['정수기 구독료',d.water],['마통이자',d.credit_int],['자동차 할부금',d.car_inst],['교통비',d.transport]
+  ].map(([k,v])=>`<tr><td>${k}</td><td class="r b">${W(v)}</td></tr>`).join('')+
+  `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--primary)">${W(c.fixed)}</td></tr>`;
+  document.getElementById('tb_var').innerHTML=[
+    ['🍚 식비',d.food],['🧴 생활용품비',d.daily],['🎁 경조사비',d.event],
+    ['🐷 비상금',d.emerg],['✈️ 여행비',d.travel],['⛪ 십일조',d.tithe]
+  ].map(([k,v])=>`<tr><td>${k}</td><td class="r b">${W(v)}</td></tr>`).join('')+
+  `<tr style="background:#F8F9FF"><td><b>합계(용돈제외)</b></td><td class="r b" style="color:var(--red)">${W((d.food||0)+(d.daily||0)+(d.event||0)+(d.emerg||0)+(d.travel||0)+(d.tithe||0))}</td></tr>`;
+
+  const mgR=[['📱 휴대폰',d.mg_phone],['🛡 보험',d.mg_ins],['📋 고정회비',d.mg_fee],['🍱 구내식당',d.mg_lunch],['💳 개인용돈',d.mg_pocket]];
+  const jkR=[['📱 휴대폰',d.jk_phone],['🛡 보험',d.jk_ins],['📋 고정회비',d.jk_fee],['💳 개인용돈',d.jk_pocket]];
+  document.getElementById('sp_mg_ttl').textContent=W(c.mg_pocket);
+  document.getElementById('sp_jk_ttl').textContent=W(c.jk_pocket);
+  document.getElementById('tb_mg_pocket').innerHTML=mgR.map(([k,v])=>`<tr><td>${k}</td><td class="r">${W(v)}</td></tr>`).join('')+
+    `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--primary)">${W(c.mg_pocket)}</td></tr>`;
+  document.getElementById('tb_jk_pocket').innerHTML=jkR.map(([k,v])=>`<tr><td>${k}</td><td class="r">${W(v)}</td></tr>`).join('')+
+    `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--red)">${W(c.jk_pocket)}</td></tr>`;
+  mkChart('c_mg_pie','doughnut',mgR.map(r=>r[0]),
+    [{data:mgR.map(r=>r[1]||0),backgroundColor:P,borderWidth:0}],
+    {cutout:'55%',plugins:{legend:{position:'right',labels:{font:{size:9}}}}}
+  );
+  mkChart('c_jk_pie','doughnut',jkR.map(r=>r[0]),
+    [{data:jkR.map(r=>r[1]||0),backgroundColor:P,borderWidth:0}],
+    {cutout:'55%',plugins:{legend:{position:'right',labels:{font:{size:9}}}}}
+  );
+  mkChart('c_spend_hbar','bar',
+    ['전세이자','관리비','자동차','통신·수도','교통비','마통이자','식비','생활용품','경조사','비상금','여행','십일조','명길용돈','진경용돈'],
+    [{label:'지출',data:[d.rent_int,d.apt,d.car_inst,d.telecom+d.water,d.transport,d.credit_int,
+      d.food,d.daily,d.event,d.emerg,d.travel,d.tithe,c.mg_pocket,c.jk_pocket].map(v=>v||0),
+      backgroundColor:P[0],borderRadius:4}],
+    {indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}}
+  );
+
+  // ── 자산 현황
+  document.getElementById('p_total').textContent=M(c.total_asset);
+  document.getElementById('p_mg').textContent=M(c.mg_asset);
+  document.getElementById('p_jk').textContent=M(c.jk_asset);
+  const portCats=['보험','청약','장기적금','단기적금','주식/CB','IRP·연금','금·코인'];
+  mkChart('c_port_bar','bar',portCats,[
+    {label:'명길',data:[d.mg_ins_a,d.mg_ck,d.mg_ls,d.mg_ss,d.mg_stock,d.mg_irp,d.mg_coin].map(v=>v||0),backgroundColor:'#6C63FF',borderRadius:4},
+    {label:'진경',data:[0,d.jk_ck,d.jk_ls,d.jk_ss,d.jk_unlisted+(d.jk_cb||0),d.jk_pension,d.jk_gold].map(v=>v||0),backgroundColor:'#FF9F43',borderRadius:4}
+  ],{scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}});
+  mkChart('c_port_pie','doughnut',pieLabels,
+    [{data:pieData,backgroundColor:P,borderWidth:0,hoverOffset:5}],
+    {cutout:'63%',plugins:{legend:{display:false}}}
+  );
+  document.getElementById('lgnd_port').innerHTML=pieLabels.map((l,i)=>
+    `<div class="li"><div class="ldot" style="background:${P[i]};"></div><span class="lname">${l}</span><span class="lpct">${M(pieData[i])}</span></div>`).join('');
+
+  const prevD = prevM||{};
+  document.getElementById('tb_mg_asset').innerHTML=[
+    ['🛡 보험','mg_ins_a'],['🏠 청약','mg_ck'],['💎 장기적금','mg_ls'],
+    ['📦 단기적금','mg_ss'],['📈 국내주식','mg_stock'],['🏦 IRP','mg_irp'],['🪙 코인','mg_coin']
+  ].map(([k,f])=>
+    `<tr><td>${k}</td><td class="r b">${W(d[f])}</td><td>${deltaChip(d[f]||0,prevD[f])}</td></tr>`).join('')+
+    `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--green)">${W(c.mg_asset)}</td><td>${deltaChip(c.mg_asset,prevC?.mg_asset)}</td></tr>`;
+  document.getElementById('tb_jk_asset').innerHTML=[
+    ['🥇 금','jk_gold',''],['🏠 청약','jk_ck',''],
+    ['📚 교직원장기저축','jk_ls',''],['📦 단기적금','jk_ss',''],
+    ['🏢 비상장주식','jk_unlisted','<span class="tag tb">본시스템즈·퓨리오젠</span>'],
+    ['📜 주식CB','jk_cb','<span class="tag tp">THE E&M</span>'],
+    ['🏦 연금저축·IRP','jk_pension','']
+  ].map(([k,f,note])=>
+    `<tr><td>${k}</td><td class="r b">${W(d[f])}</td><td>${note}</td></tr>`).join('')+
+    `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--orange)">${W(c.jk_asset)}</td><td></td></tr>`;
+
+  // ── 수입·저축
+  document.getElementById('sv_income').textContent=W(c.income);
+  document.getElementById('sv_mg').textContent=W(d.mg_income||0);
+  document.getElementById('sv_jk').textContent=W(d.jk_income||0);
+  document.getElementById('sv_save').textContent=W(c.saving);
+  document.getElementById('sv_rate').textContent=c.save_rate.toFixed(1)+'%';
+  mkChart('c_sv_flow','bar',['총 수입','생활비 합계','저축·투자'],
+    [{label:'금액',data:[c.income,c.living,c.saving],
+      backgroundColor:['#6C63FF','#FF5C7A','#2ECC8A'],borderRadius:7}],
+    {plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}}
+  );
+  document.getElementById('tb_repay').innerHTML=[
+    ['🏦 대출상환',d.repay,'<span class="tag tb">4.60% 비과세</span>'],
+    ['🌱 청년도약적금',d.youth,''],
+    ['💳 신한은행 적금',d.shinhan,'<span class="tag tg">7.00%</span>'],
+    ['💳 우리은행 적금',d.woori,'<span class="tag tg">8.50%</span>']
+  ].map(([k,v,t])=>`<tr><td>${k}</td><td class="r b">${W(v)}</td><td>${t}</td></tr>`).join('')+
+  `<tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--primary)">${W(c.saving)}</td><td></td></tr>`;
+  const sp=c.income>0?c.living/c.income*100:0, ss=c.income>0?c.saving/c.income*100:0;
+  document.getElementById('sv_prog').innerHTML=`
+    <div class="pt"><span class="plbl">생활비</span><span class="pval">${sp.toFixed(1)}%</span></div>
+    <div class="pbar" style="margin-bottom:10px;"><div class="pfill" style="width:${Math.min(100,sp)}%;background:#FF5C7A;"></div></div>
+    <div class="pt"><span class="plbl">저축·투자</span><span class="pval">${ss.toFixed(1)}%</span></div>
+    <div class="pbar"><div class="pfill" style="width:${Math.min(100,ss)}%;background:#6C63FF;"></div></div>`;
+
+  // ── 대출
+  document.getElementById('d_total').textContent=W(c.total_debt);
+  document.getElementById('d_credit').textContent=W(d.ln_credit||0);
+  document.getElementById('d_car').textContent=W(d.ln_car||0);
+  document.getElementById('d_teacher').textContent=W(d.ln_teacher||0);
+  if(prevC){
+    const dd=c.total_debt-prevC.total_debt;
+    document.getElementById('d_total_chg').innerHTML=`<span class="${dd<=0?'dn':'up'}">${dd<=0?'▼ ':'▲ '}${ML(Math.abs(dd))}</span>`;
+  }
+  mkChart('c_debt_bar','bar',['마이너스통장','적금담보대출','교직원공제회','자동차할부'],
+    [{label:'잔여금액',data:[d.ln_credit,d.ln_saving,d.ln_teacher,d.ln_car].map(v=>v||0),
+      backgroundColor:['#FF5C7A','#FF9F43','#3D9FFF','#A78BFA'],borderRadius:5}],
+    {plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}}
+  );
+  mkChart('c_debt_pie','doughnut',['순 자산','총 부채'],
+    [{data:[c.net_asset,c.total_debt],backgroundColor:['#2ECC8A','#FF5C7A'],borderWidth:0}],
+    {cutout:'62%',plugins:{legend:{display:false}}}
+  );
+  document.getElementById('lgnd_debt').innerHTML=`
+    <div class="li"><div class="ldot" style="background:#2ECC8A;"></div><span class="lname">순 자산</span><span class="lpct">${W(c.net_asset)}</span></div>
+    <div class="li"><div class="ldot" style="background:#FF5C7A;"></div><span class="lname">총 부채</span><span class="lpct">${W(c.total_debt)}</span></div>`;
+  document.getElementById('tb_debt').innerHTML=`
+    <tr><td>💳 마이너스통장</td><td class="r b">${W(d.ln_credit)}</td><td class="r">5.73%</td><td>명길</td></tr>
+    <tr><td>📦 적금담보대출</td><td class="r b">${W(d.ln_saving)}</td><td class="r">3.79%</td><td></td></tr>
+    <tr><td>📚 교직원공제회</td><td class="r b">${W(d.ln_teacher)}</td><td class="r">4.70%</td><td></td></tr>
+    <tr><td>🚗 자동차할부</td><td class="r b">${W(d.ln_car)}</td><td class="r">3.70%</td><td>잔여 57개월</td></tr>
+    <tr style="background:#F8F9FF"><td><b>합계</b></td><td class="r b" style="color:var(--red)">${W(c.total_debt)}</td><td></td><td></td></tr>`;
+
+  // ── 추이 탭
+  renderTrend();
+}
+
+// ════════════════════════════════════════════
+//  RENDER — TREND
+// ════════════════════════════════════════════
+function renderTrend(){
+  const months = sortedMonths();
+  const labels = months.map(m=>{ const [y,mo]=m.split('-'); return `${y.slice(2)}.${mo}`; });
+
+  // month badges
+  document.getElementById('trend_month_list').innerHTML=months.map(m=>
+    `<div class="mbadge${m===CURRENT?' cur':''}" onclick="CURRENT='${m}';render();">${fmtMonth(m)}</div>`
+  ).join('');
+
+  // ── 자산 추이 라인
+  const ta=months.map(m=>calc(HISTORY[m]).total_asset);
+  const na=months.map(m=>calc(HISTORY[m]).net_asset);
+  const td=months.map(m=>calc(HISTORY[m]).total_debt);
+  mkChart('c_tr_asset','line',labels,[
+    {label:'총 자산',data:ta,borderColor:'#6C63FF',backgroundColor:'rgba(108,99,255,.1)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#6C63FF'},
+    {label:'순 자산',data:na,borderColor:'#2ECC8A',backgroundColor:'rgba(46,204,138,.08)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#2ECC8A'},
+    {label:'총 부채',data:td,borderColor:'#FF5C7A',backgroundColor:'rgba(255,92,122,.06)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#FF5C7A'}
+  ],{scales:{y:{ticks:{callback:v=>ML(v)}}}});
+
+  // ── 수입/지출/저축 바
+  const inc=months.map(m=>calc(HISTORY[m]).income);
+  const exp=months.map(m=>calc(HISTORY[m]).living);
+  const sav=months.map(m=>calc(HISTORY[m]).saving);
+  mkChart('c_tr_income','bar',labels,[
+    {label:'수입',data:inc,backgroundColor:'#6C63FF',borderRadius:4},
+    {label:'생활비',data:exp,backgroundColor:'#FF5C7A',borderRadius:4},
+    {label:'저축',data:sav,backgroundColor:'#2ECC8A',borderRadius:4}
+  ],{scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}});
+
+  // ── 저축률 라인
+  const rate=months.map(m=>calc(HISTORY[m]).save_rate);
+  mkChart('c_tr_rate','line',labels,[
+    {label:'저축률(%)',data:rate,borderColor:'#FF9F43',backgroundColor:'rgba(255,159,67,.12)',
+      fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#FF9F43'}
+  ],{scales:{y:{min:0,max:80,ticks:{callback:v=>v+'%'}}},
+    plugins:{legend:{display:false},annotation:{}}});
+
+  // ── 대출 감소 라인
+  const lc=months.map(m=>HISTORY[m].ln_credit||0);
+  const ls=months.map(m=>HISTORY[m].ln_saving||0);
+  const lt=months.map(m=>HISTORY[m].ln_teacher||0);
+  const lcar=months.map(m=>HISTORY[m].ln_car||0);
+  mkChart('c_tr_debt','line',labels,[
+    {label:'마이너스통장',data:lc,borderColor:'#FF5C7A',tension:.4,pointRadius:3,borderDash:[]},
+    {label:'적금담보대출',data:ls,borderColor:'#FF9F43',tension:.4,pointRadius:3},
+    {label:'교직원공제회',data:lt,borderColor:'#3D9FFF',tension:.4,pointRadius:3},
+    {label:'자동차할부',data:lcar,borderColor:'#A78BFA',tension:.4,pointRadius:3}
+  ],{scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}}});
+
+  // ── 자산 구성 누적 바
+  const stock = months.map(m=>HISTORY[m].mg_stock||0);
+  const unlisted = months.map(m=>HISTORY[m].jk_unlisted||0);
+  const savArr = months.map(m=>{const d=HISTORY[m];return (d.mg_ls||0)+(d.mg_ss||0)+(d.jk_ls||0)+(d.jk_ss||0);});
+  const insArr = months.map(m=>{const d=HISTORY[m];return (d.mg_ins_a||0)+(d.mg_irp||0)+(d.jk_pension||0);});
+  const etcArr = months.map(m=>{const d=HISTORY[m];return (d.mg_ck||0)+(d.jk_ck||0)+(d.jk_gold||0)+(d.mg_coin||0)+(d.jk_cb||0);});
+  mkChart('c_tr_stack','bar',labels,[
+    {label:'국내주식',data:stock,backgroundColor:'#6C63FF',borderRadius:2},
+    {label:'비상장주식',data:unlisted,backgroundColor:'#FF9F43',borderRadius:2},
+    {label:'예·적금',data:savArr,backgroundColor:'#2ECC8A',borderRadius:2},
+    {label:'보험·연금',data:insArr,backgroundColor:'#3D9FFF',borderRadius:2},
+    {label:'기타',data:etcArr,backgroundColor:'#A78BFA',borderRadius:2}
+  ],{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>ML(v)}}},
+    plugins:{legend:{position:'top',labels:{font:{size:10}}}}});
+
+  // ── 월별 요약 테이블
+  document.getElementById('tb_trend_body').innerHTML=months.map((m,i)=>{
+    const c=calc(HISTORY[m]);
+    const prev=i>0?calc(HISTORY[months[i-1]]):null;
+    const cur=m===CURRENT;
+    return `<tr style="${cur?'background:#EEEEFF;font-weight:600;':''}">
+      <td><b>${fmtMonth(m)}</b></td>
+      <td class="r">${W(c.income)}</td>
+      <td class="r">${W(c.living)}</td>
+      <td class="r">${W(c.saving)}</td>
+      <td class="r">${c.save_rate.toFixed(1)}%</td>
+      <td class="r">${M(c.total_asset)}${prev?deltaChip(c.total_asset,prev.total_asset):''}</td>
+      <td class="r">${W(c.total_debt)}${prev?deltaChip(c.total_debt,prev.total_debt):''}</td>
+      <td class="r">${M(c.net_asset)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  DRAWER
+// ════════════════════════════════════════════
+const FIELDS = [
+  'mg_income','jk_income','interest',
+  'rent_int','apt','telecom','water','credit_int','car_inst','transport',
+  'food','daily','event','emerg','travel','tithe',
+  'mg_phone','mg_ins','mg_fee','mg_lunch','mg_pocket',
+  'jk_phone','jk_ins','jk_fee','jk_pocket',
+  'mg_ins_a','mg_ck','mg_ls','mg_ss','mg_stock','mg_irp','mg_coin',
+  'jk_gold','jk_ck','jk_ls','jk_ss','jk_unlisted','jk_cb','jk_pension',
+  'ln_credit','ln_saving','ln_teacher','ln_car',
+  'repay','youth','shinhan','woori','annual_goal'
+];
+
+function openDrawer(){
+  const d=D();
+  const [y,m]=CURRENT.split('-');
+  document.getElementById('drawer_month_badge').textContent=`${y}년 ${parseInt(m)}월`;
+  FIELDS.forEach(f=>{ const el=document.getElementById('i_'+f); if(el) el.value=d[f]||0; });
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function saveMonth(){
+  const d = HISTORY[CURRENT] || {};
+  FIELDS.forEach(f=>{ const el=document.getElementById('i_'+f); if(el) d[f]=parseFloat(el.value)||0; });
+  HISTORY[CURRENT] = d;
+  saveHistory();
+  closeDrawer();
+  render();
+  toast('✅ 저장되었습니다!');
+}
+
+// ════════════════════════════════════════════
+//  NEW MONTH
+// ════════════════════════════════════════════
+function addNewMonth(){
+  const months = sortedMonths();
+  const last = months[months.length-1];
+  const [y,m] = last.split('-');
+  let ny=parseInt(y), nm=parseInt(m)+1;
+  if(nm>12){ny++;nm=1;}
+  const key = `${ny}-${String(nm).padStart(2,'0')}`;
+
+  if(HISTORY[key]){
+    CURRENT=key; render();
+    toast(`📅 ${fmtMonth(key)}으로 이동했습니다`);
+    return;
+  }
+
+  // 이전 달 데이터 복사
+  HISTORY[key] = JSON.parse(JSON.stringify(HISTORY[last]||{}));
+  CURRENT = key;
+  saveHistory();
+  render();
+  setTimeout(()=>openDrawer(), 200);
+  toast(`➕ ${fmtMonth(key)} 추가! 숫자를 입력해주세요 ✏️`);
+}
+
+// ════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════
+function prevMonth(){
+  const months=sortedMonths(), idx=months.indexOf(CURRENT);
+  if(idx>0){ CURRENT=months[idx-1]; render(); }
+}
+function nextMonth(){
+  const months=sortedMonths(), idx=months.indexOf(CURRENT);
+  if(idx<months.length-1){ CURRENT=months[idx+1]; render(); }
+}
+function show(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  el.classList.add('on');
+}
+function toast(msg){
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2600);
+}
+
+// ════════════════════════════════════════════
+//  PLANS — 대형 지출 계획
+// ════════════════════════════════════════════
+const PLANS_KEY = 'kakaebu_plans_v2';
+let PLANS = [];
+let PLAN_FILTER = 'all';
+
+const PLAN_SEED = [
+  {id:1,name:'신혼여행',emoji:'✈️',cat:'결혼·신혼',amount:6000000,saved:500000,
+   date:'2026-10',priority:'high',color:'#6C63FF',status:'saving',
+   notes:'유럽 2주 일정 목표. 항공권 미리 예매 필요.',
+   sub_items:[
+     {id:101,name:'왕복 항공권 (2인)',amount:2000000,paid:false},
+     {id:102,name:'숙박 7박 (호텔)',amount:2200000,paid:false},
+     {id:103,name:'현지 교통·투어',amount:600000,paid:false},
+     {id:104,name:'현지 식비·쇼핑',amount:800000,paid:false},
+     {id:105,name:'여행자 보험',amount:100000,paid:true},
+     {id:106,name:'유심·포켓와이파이',amount:60000,paid:false},
+   ]},
+  {id:2,name:'첫째 출산 준비',emoji:'👶',cat:'출산·육아',amount:5000000,saved:200000,
+   date:'2027-06',priority:'high',color:'#2ECC8A',status:'saving',
+   notes:'출산 관련 용품, 산후조리원, 유아용품 초기 구비.',
+   sub_items:[
+     {id:201,name:'산후조리원 2주',amount:2500000,paid:false},
+     {id:202,name:'유모차·카시트',amount:700000,paid:false},
+     {id:203,name:'아기 침대·침구',amount:300000,paid:false},
+     {id:204,name:'의류·소품 초기 구비',amount:200000,paid:false},
+     {id:205,name:'출산 준비물 (기저귀 등)',amount:200000,paid:false},
+     {id:206,name:'병원비·검진 추가',amount:100000,paid:false},
+   ]},
+  {id:3,name:'신차 구매',emoji:'🚗',cat:'차량·교통',amount:15000000,saved:0,
+   date:'2028-03',priority:'mid',color:'#FF9F43',status:'planning',
+   notes:'현재 차량 할부 완납 후 교체 예정. 전기차 또는 SUV 검토 중.',
+   sub_items:[
+     {id:301,name:'차량 계약금',amount:3000000,paid:false},
+     {id:302,name:'잔금 (대출 제외)',amount:10000000,paid:false},
+     {id:303,name:'취등록세·보험',amount:1500000,paid:false},
+     {id:304,name:'내비·블랙박스 옵션',amount:500000,paid:false},
+   ]},
+  {id:4,name:'내 집 마련 (전세→매매)',emoji:'🏠',cat:'주택·이사',amount:50000000,saved:10301000,
+   date:'2029-12',priority:'high',color:'#FF5C7A',status:'saving',
+   notes:'청약 당첨 or 기존 아파트 매매 목표. 청약 통장 유지 필수.',
+   sub_items:[
+     {id:401,name:'계약금 (총 매매가 10%)',amount:25000000,paid:false},
+     {id:402,name:'이사비용',amount:1000000,paid:false},
+     {id:403,name:'인테리어·가구',amount:10000000,paid:false},
+     {id:404,name:'취등록세·법무비',amount:7000000,paid:false},
+     {id:405,name:'부동산 중개 수수료',amount:3000000,paid:false},
+     {id:406,name:'이사짐·기타 잡비',amount:500000,paid:false},
+   ]},
+  {id:5,name:'부모님 여행 선물',emoji:'💝',cat:'여행·여가',amount:3000000,saved:0,
+   date:'2026-09',priority:'mid',color:'#A78BFA',status:'planning',
+   notes:'양가 부모님 제주도 여행 선물 계획.',
+   sub_items:[
+     {id:501,name:'항공권 (4인)',amount:800000,paid:false},
+     {id:502,name:'숙소 (3박)',amount:1000000,paid:false},
+     {id:503,name:'렌트카',amount:400000,paid:false},
+     {id:504,name:'식사·관광',amount:600000,paid:false},
+     {id:505,name:'용돈·기념품',amount:200000,paid:false},
+   ]},
+  {id:6,name:'아이 교육비 준비',emoji:'📚',cat:'교육',amount:20000000,saved:0,
+   date:'2030-03',priority:'low',color:'#26C6DA',status:'planning',
+   notes:'초등학교 입학 전 교육비 펀드 준비.',
+   sub_items:[
+     {id:601,name:'영유아 학원비 (월 적립)',amount:6000000,paid:false},
+     {id:602,name:'교재·교구 구입',amount:1000000,paid:false},
+     {id:603,name:'피아노·체육 과외',amount:5000000,paid:false},
+     {id:604,name:'영어 유치원 준비금',amount:5000000,paid:false},
+     {id:605,name:'예비비',amount:3000000,paid:false},
+   ]},
+];
+
+function loadPlans(){
+  try{
+    const s=localStorage.getItem(PLANS_KEY);
+    PLANS = s ? JSON.parse(s) : JSON.parse(JSON.stringify(PLAN_SEED));
+  }catch(e){ PLANS = JSON.parse(JSON.stringify(PLAN_SEED)); }
+}
+function savePlans(){ localStorage.setItem(PLANS_KEY,JSON.stringify(PLANS)); }
+
+// ── 세부 항목 UI (모달 내)
+let _siIdCounter = Date.now();
+function addSubItemRow(name='', amount='', paid=false){
+  const id = ++_siIdCounter;
+  const row = document.createElement('div');
+  row.className = 'si-modal-row';
+  row.dataset.siid = id;
+  row.innerHTML = `
+    <input type="text" class="si_name" placeholder="항목명 (예: 항공권)" value="${name}"/>
+    <input type="number" class="si_amount" placeholder="금액" value="${amount}" onchange="updateSiTotal()"/>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.75rem;white-space:nowrap;cursor:pointer;">
+      <input type="checkbox" ${paid?'checked':''} style="accent-color:var(--green);"/> 완료
+    </label>
+    <button class="si-del" onclick="removeSubItemRow(this)" title="삭제">✕</button>`;
+  document.getElementById('pm_si_list').appendChild(row);
+  updateSiTotal();
+}
+function removeSubItemRow(btn){
+  btn.closest('.si-modal-row').remove();
+  updateSiTotal();
+}
+function updateSiTotal(){
+  const rows = document.querySelectorAll('#pm_si_list .si-modal-row');
+  const total = Array.from(rows).reduce((s,r)=>s+(parseFloat(r.querySelector('.si_amount').value)||0),0);
+  const el = document.getElementById('pm_si_total');
+  const velEl = document.getElementById('pm_si_total_val');
+  if(rows.length>0){ el.style.display='flex'; velEl.textContent=W(total); }
+  else { el.style.display='none'; }
+}
+function getSubItemsFromModal(){
+  return Array.from(document.querySelectorAll('#pm_si_list .si-modal-row')).map(r=>({
+    id: parseInt(r.dataset.siid),
+    name: r.querySelector('.si_name').value.trim(),
+    amount: parseFloat(r.querySelector('.si_amount').value)||0,
+    paid: r.querySelector('input[type=checkbox]').checked,
+  })).filter(x=>x.name);
+}
+
+// ── 카테고리 색상/이모지
+const CAT_META = {
+  '결혼·신혼':{bg:'#F0EEFF',text:'#5B4FD8',emoji:'💍'},
+  '출산·육아':{bg:'#E5FAF1',text:'#18A065',emoji:'👶'},
+  '주택·이사':{bg:'#FFE8EE',text:'#E83A5A',emoji:'🏠'},
+  '여행·여가':{bg:'#E6F1FF',text:'#2B70D8',emoji:'✈️'},
+  '차량·교통':{bg:'#FFF3E0',text:'#D4750A',emoji:'🚗'},
+  '의료·건강':{bg:'#E0F7FA',text:'#0097A7',emoji:'🏥'},
+  '교육':{bg:'#F3F4F8',text:'#444',emoji:'📚'},
+  '기타':{bg:'#F3F4F8',text:'#666',emoji:'📦'},
+};
+
+function monthsUntil(ym){
+  if(!ym) return null;
+  const now = new Date();
+  const [y,m] = ym.split('-').map(Number);
+  return (y-now.getFullYear())*12 + (m-(now.getMonth()+1));
+}
+function fmtDate(ym){
+  if(!ym) return '–';
+  const [y,m]=ym.split('-');
+  return `${y}년 ${parseInt(m)}월`;
+}
+function urgencyLabel(mu){
+  if(mu===null) return '';
+  if(mu<0) return '<span class="tag tr">기한 초과</span>';
+  if(mu<=3) return '<span class="tag tr">🔥 3개월 이내</span>';
+  if(mu<=6) return '<span class="tag to">⚡ 6개월 이내</span>';
+  if(mu<=12) return '<span class="tag tg">✅ 1년 이내</span>';
+  return `<span class="tag tb">${mu}개월 후</span>`;
+}
+
+// ── 필터
+function filterPlans(cat, el){
+  PLAN_FILTER = cat;
+  document.querySelectorAll('#plan_filter_row .mbadge').forEach(b=>b.classList.remove('cur'));
+  el.classList.add('cur');
+  renderPlanCards();
+}
+
+// ── 렌더: 전체 plans 탭
+function renderPlans(){
+  renderPlanSummary();
+  renderPlanCards();
+  renderPlanCharts();
+}
+
+function renderPlanSummary(){
+  const active = PLANS.filter(p=>p.status!=='done');
+  const totalAmt = active.reduce((s,p)=>s+(p.amount||0),0);
+  const totalSaved = active.reduce((s,p)=>s+(p.saved||0),0);
+  const remaining = totalAmt - totalSaved;
+  // 가장 급한 계획
+  const urgent = active.filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  // 이달 저축 기반 월 필요
+  const cSaving = calc(D()).saving;
+  const avgMonthly = active.filter(p=>p.date).reduce((s,p)=>{
+    const mu=monthsUntil(p.date); if(!mu||mu<=0) return s;
+    return s + ((p.amount||0)-(p.saved||0))/mu;
+  },0);
+
+  document.getElementById('plan_summary_cards').innerHTML=`
+    <div class="sc"><div class="sci" style="background:#EEEEFF;">📌</div><div>
+      <div class="sclbl">총 계획 수</div>
+      <div class="scval" style="color:var(--primary);">${PLANS.length}개</div>
+      <div class="scchg" style="color:var(--sub);">완료 ${PLANS.filter(p=>p.status==='done').length}개 포함</div>
+    </div></div>
+    <div class="sc"><div class="sci" style="background:#FFE8EE;">💸</div><div>
+      <div class="sclbl">총 목표 금액</div>
+      <div class="scval" style="color:var(--red);">${M(totalAmt)}</div>
+      <div class="scchg up">진행 중 계획 합산</div>
+    </div></div>
+    <div class="sc"><div class="sci" style="background:#E5FAF1;">🐣</div><div>
+      <div class="sclbl">현재 모인 금액</div>
+      <div class="scval" style="color:var(--green);">${M(totalSaved)}</div>
+      <div class="scchg dn">달성률 ${totalAmt>0?(totalSaved/totalAmt*100).toFixed(1):0}%</div>
+    </div></div>
+    <div class="sc"><div class="sci" style="background:#FFF3E0;">📐</div><div>
+      <div class="sclbl">월 필요 저축 추정</div>
+      <div class="scval" style="color:var(--orange);">${M(avgMonthly)}</div>
+      <div class="scchg" style="color:${cSaving>=avgMonthly?'var(--green)':'var(--red)'};">${cSaving>=avgMonthly?'✅ 현재 저축으로 가능':'⚠️ 저축 부족'}</div>
+    </div></div>`;
+}
+
+function renderPlanCards(){
+  const filtered = PLAN_FILTER==='all' ? PLANS : PLANS.filter(p=>p.cat===PLAN_FILTER);
+  if(!filtered.length){
+    document.getElementById('plan_cards').innerHTML=
+      `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--sub);">
+        해당 카테고리의 계획이 없습니다.<br>
+        <button class="plan-add-btn" style="margin:14px auto 0;display:inline-flex;" onclick="openPlanModal()">➕ 계획 추가</button>
+      </div>`;
+    return;
+  }
+
+  // 정렬: 완료 제일 뒤, 나머지는 날짜 오름차순
+  const sorted = [...filtered].sort((a,b)=>{
+    if(a.status==='done' && b.status!=='done') return 1;
+    if(a.status!=='done' && b.status==='done') return -1;
+    return (a.date||'9999').localeCompare(b.date||'9999');
+  });
+
+  document.getElementById('plan_cards').innerHTML = sorted.map(p=>{
+    const pct = p.amount>0 ? Math.min(100,(p.saved||0)/p.amount*100) : 0;
+    const mu = monthsUntil(p.date);
+    const remaining = Math.max(0,(p.amount||0)-(p.saved||0));
+    const monthlyNeeded = (mu&&mu>0) ? remaining/mu : 0;
+    const cm = CAT_META[p.cat]||CAT_META['기타'];
+    const prioIcon = {high:'🔴',mid:'🟡',low:'🟢'}[p.priority]||'🟡';
+    return `
+    <div class="plan-card${p.status==='done'?' done':''}" id="pc_${p.id}">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${p.color};border-radius:16px 16px 0 0;"></div>
+      <div class="pc-top">
+        <div style="font-size:2rem;line-height:1;">${p.emoji||cm.emoji}</div>
+        <div class="pc-actions">
+          <button class="pc-act-btn" onclick="editPlan(${p.id})" title="수정">✏️</button>
+          <button class="pc-act-btn del" onclick="deletePlan(${p.id})" title="삭제">🗑</button>
+        </div>
+      </div>
+      <div class="pc-name">${p.name}</div>
+      <span class="pc-cat" style="background:${cm.bg};color:${cm.text};">${p.cat}</span>
+      ${urgencyLabel(mu)} ${prioIcon}
+      <div class="pc-amount" style="color:${p.color};">${W(p.amount)}</div>
+      <div class="pc-saved-row">
+        <span>저축 완료: <strong>${W(p.saved||0)}</strong></span>
+        <span style="font-weight:700;color:${p.color};">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="pc-pbar"><div class="pc-pfill" style="width:${pct}%;background:${p.color};"></div></div>
+      <div class="pc-meta">
+        <span>🎯 목표 <strong>${fmtDate(p.date)}</strong></span>
+        <span>부족 <strong style="color:var(--red);">${W(remaining)}</strong></span>
+      </div>
+      ${monthlyNeeded>0 ? `<div class="pc-monthly">월 <strong>${W(Math.ceil(monthlyNeeded))}</strong> 저축 필요 (${mu}개월 남음)</div>` : ''}
+      ${p.notes ? `<div class="pc-notes">${p.notes.replace(/\n/g,'<br>')}</div>` : ''}
+      ${(p.sub_items&&p.sub_items.length)>0 ? (()=>{
+        const sis = p.sub_items;
+        const doneCount = sis.filter(s=>s.paid).length;
+        const doneAmt = sis.filter(s=>s.paid).reduce((a,s)=>a+s.amount,0);
+        const totalAmt = sis.reduce((a,s)=>a+s.amount,0);
+        const siPct = totalAmt>0 ? doneAmt/totalAmt*100 : 0;
+        return `<div class="pc-subitems">
+          <div class="pc-si-hdr">
+            <span>📋 세부 항목 (${doneCount}/${sis.length} 완료)</span>
+            <span class="si-pct" style="color:${p.color}">${siPct.toFixed(0)}%</span>
+          </div>
+          <div class="pc-si-bar"><div class="pc-si-fill" style="width:${siPct}%;background:${p.color};"></div></div>
+          ${sis.map(s=>`
+            <div class="pc-si-row${s.paid?' si-done':''}">
+              <input type="checkbox" ${s.paid?'checked':''} onchange="toggleSubItem(${p.id},${s.id},this.checked)"/>
+              <span class="si-name">${s.name}</span>
+              <span class="si-amt">${W(s.amount)}</span>
+            </div>`).join('')}
+        </div>`;
+      })() : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderPlanCharts(){
+  const active = PLANS.filter(p=>p.status!=='done' && p.amount>0);
+  if(!active.length) return;
+
+  // 바 차트: 목표 vs 저축
+  const sorted = [...active].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
+  mkChart('c_plan_bar','bar',sorted.map(p=>p.name),[
+    {label:'목표 금액',data:sorted.map(p=>p.amount||0),backgroundColor:'rgba(108,99,255,.25)',borderColor:'#6C63FF',borderWidth:2,borderRadius:5},
+    {label:'현재 저축',data:sorted.map(p=>p.saved||0),backgroundColor:sorted.map(p=>p.color||'#6C63FF')+'CC',
+      backgroundColor:sorted.map(p=>p.color||'#6C63FF'),borderRadius:5}
+  ],{scales:{y:{ticks:{callback:v=>ML(v)}}}});
+
+  // 타임라인 (수평 바 - 남은 개월수)
+  const now = new Date();
+  const nowYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  mkChart('c_plan_timeline','bar',sorted.map(p=>p.name),[
+    {label:'남은 기간(개월)',data:sorted.map(p=>Math.max(0,monthsUntil(p.date)||0)),
+      backgroundColor:sorted.map(p=>p.color||'#6C63FF'),borderRadius:5}
+  ],{indexAxis:'y',plugins:{legend:{display:false}},
+    scales:{x:{title:{display:true,text:'남은 개월 수'},ticks:{stepSize:3}}}});
+}
+
+// ── CRUD
+let EDITING_PLAN_ID = null;
+let SELECTED_COLOR = '#6C63FF';
+
+function openPlanModal(id=null){
+  EDITING_PLAN_ID = id;
+  SELECTED_COLOR = '#6C63FF';
+  if(id){
+    const p = PLANS.find(x=>x.id===id);
+    if(!p) return;
+    document.getElementById('plan_modal_title').textContent = '✏️ 계획 수정';
+    document.getElementById('pm_id').value = id;
+    document.getElementById('pm_name').value = p.name||'';
+    document.getElementById('pm_cat').value = p.cat||'기타';
+    document.getElementById('pm_emoji').value = p.emoji||'';
+    document.getElementById('pm_amount').value = p.amount||0;
+    document.getElementById('pm_saved').value = p.saved||0;
+    document.getElementById('pm_date').value = p.date||'';
+    document.getElementById('pm_priority').value = p.priority||'mid';
+    document.getElementById('pm_notes').value = p.notes||'';
+    document.getElementById('pm_status').value = p.status||'planning';
+    SELECTED_COLOR = p.color||'#6C63FF';
+    // 세부항목 로드
+    document.getElementById('pm_si_list').innerHTML='';
+    (p.sub_items||[]).forEach(si=>addSubItemRow(si.name,si.amount,si.paid));
+  } else {
+    document.getElementById('plan_modal_title').textContent = '📌 계획 추가';
+    document.getElementById('pm_id').value = '';
+    document.getElementById('pm_name').value = '';
+    document.getElementById('pm_cat').value = '기타';
+    document.getElementById('pm_emoji').value = '';
+    document.getElementById('pm_amount').value = '';
+    document.getElementById('pm_saved').value = 0;
+    document.getElementById('pm_date').value = '';
+    document.getElementById('pm_priority').value = 'mid';
+    document.getElementById('pm_notes').value = '';
+    document.getElementById('pm_status').value = 'planning';
+    SELECTED_COLOR = '#6C63FF';
+    document.getElementById('pm_si_list').innerHTML='';
+    updateSiTotal();
+  }
+  // 색상 도트 업데이트
+  document.querySelectorAll('.color-dot').forEach(d=>{
+    d.classList.toggle('on', d.dataset.color===SELECTED_COLOR);
+  });
+  document.getElementById('plan_modal_bg').classList.add('show');
+}
+
+function closePlanModal(){
+  document.getElementById('plan_modal_bg').classList.remove('show');
+}
+function handleModalBgClick(e){
+  if(e.target===document.getElementById('plan_modal_bg')) closePlanModal();
+}
+function pickColor(el){
+  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on');
+  SELECTED_COLOR = el.dataset.color;
+}
+
+function savePlan(){
+  const name = document.getElementById('pm_name').value.trim();
+  if(!name){ alert('계획 이름을 입력해주세요'); return; }
+  const amount = parseFloat(document.getElementById('pm_amount').value)||0;
+  if(!amount){ alert('목표 금액을 입력해주세요'); return; }
+
+  const plan = {
+    id: EDITING_PLAN_ID || Date.now(),
+    name,
+    emoji: document.getElementById('pm_emoji').value.trim() || (CAT_META[document.getElementById('pm_cat').value]?.emoji||'📌'),
+    cat: document.getElementById('pm_cat').value,
+    amount,
+    saved: parseFloat(document.getElementById('pm_saved').value)||0,
+    date: document.getElementById('pm_date').value,
+    priority: document.getElementById('pm_priority').value,
+    color: SELECTED_COLOR,
+    notes: document.getElementById('pm_notes').value.trim(),
+    status: document.getElementById('pm_status').value,
+    sub_items: getSubItemsFromModal(),
+  };
+
+  if(EDITING_PLAN_ID){
+    const idx = PLANS.findIndex(p=>p.id===EDITING_PLAN_ID);
+    if(idx>=0) PLANS[idx]=plan;
+  } else {
+    PLANS.push(plan);
+  }
+  savePlans();
+  closePlanModal();
+  renderPlans();
+  toast(EDITING_PLAN_ID ? '✅ 계획이 수정되었습니다' : '➕ 새 계획이 추가되었습니다!');
+}
+
+function editPlan(id){ openPlanModal(id); }
+
+function toggleSubItem(planId, siId, checked){
+  const plan = PLANS.find(p=>p.id===planId);
+  if(!plan||!plan.sub_items) return;
+  const si = plan.sub_items.find(s=>s.id===siId);
+  if(si){ si.paid=checked; }
+  // saved 금액을 완료된 항목 합계로 자동 업데이트
+  const paidAmt = plan.sub_items.filter(s=>s.paid).reduce((a,s)=>a+s.amount,0);
+  plan.saved = paidAmt;
+  savePlans();
+  renderPlans();
+  toast(checked ? '✅ 항목 완료 처리!' : '↩️ 항목 미완료로 변경');
+}
+
+function deletePlan(id){
+  const p = PLANS.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`"${p.name}" 계획을 삭제할까요?`)) return;
+  PLANS = PLANS.filter(x=>x.id!==id);
+  savePlans();
+  renderPlans();
+  toast('🗑 계획이 삭제되었습니다');
+}
+
+// ════════════════════════════════════════════
+//  PIN 잠금 시스템
+// ════════════════════════════════════════════
+const PIN_STORAGE = 'kakaebu_pin';
+const SESSION_AUTH = 'kakaebu_session';
+let _pinBuffer = '';
+let _pinMode = 'login';    // 'login' | 'setup' | 'confirm' | 'change_new' | 'change_confirm'
+let _pinTemp  = '';
+let _pinFailCount = 0;
+
+function buildNumpad(){
+  const nums = [1,2,3,4,5,6,7,8,9,'empty',0,'del'];
+  document.getElementById('numpad').innerHTML = nums.map(n=>{
+    if(n==='empty') return `<div class="numpad-btn empty"></div>`;
+    if(n==='del') return `<button class="numpad-btn del" onclick="pinDel()">⌫</button>`;
+    return `<button class="numpad-btn" onclick="pinInput(${n})">${n}</button>`;
+  }).join('');
+}
+
+function updatePinDots(filled, mode='normal'){
+  for(let i=0;i<4;i++){
+    const d = document.getElementById('pd'+i);
+    d.className = 'pin-dot' + (i<filled?' filled':'') + (mode==='error'?' error':'');
+  }
+}
+
+function pinInput(n){
+  if(_pinBuffer.length>=4) return;
+  _pinBuffer += String(n);
+  updatePinDots(_pinBuffer.length);
+  if(_pinBuffer.length===4) setTimeout(()=>processPinEntry(), 200);
+}
+function pinDel(){
+  if(_pinBuffer.length===0) return;
+  _pinBuffer = _pinBuffer.slice(0,-1);
+  updatePinDots(_pinBuffer.length);
+}
+
+function processPinEntry(){
+  const savedPin = localStorage.getItem(PIN_STORAGE);
+
+  if(_pinMode==='setup'){
+    _pinTemp = _pinBuffer; _pinBuffer='';
+    _pinMode = 'confirm';
+    document.getElementById('lock_msg').textContent = 'PIN을 한 번 더 입력하세요';
+    document.getElementById('lock_hint').textContent = '확인을 위해 동일한 PIN을 다시 입력해주세요';
+    updatePinDots(0);
+    return;
+  }
+
+  if(_pinMode==='confirm'){
+    if(_pinBuffer===_pinTemp){
+      localStorage.setItem(PIN_STORAGE, _pinBuffer);
+      sessionStorage.setItem(SESSION_AUTH,'1');
+      _pinBuffer=''; _pinTemp='';
+      document.getElementById('lock_hint').textContent='';
+      unlockApp();
+      toast('🔐 PIN이 설정되었습니다!');
+    } else {
+      _pinBuffer=''; _pinTemp='';
+      _pinMode='setup';
+      document.getElementById('lock_msg').textContent = 'PIN이 일치하지 않습니다. 다시 설정해주세요';
+      pinError();
+    }
+    return;
+  }
+
+  if(_pinMode==='change_new'){
+    _pinTemp = _pinBuffer; _pinBuffer='';
+    _pinMode = 'change_confirm';
+    document.getElementById('lock_msg').textContent = '새 PIN을 한 번 더 입력하세요';
+    updatePinDots(0);
+    return;
+  }
+  if(_pinMode==='change_confirm'){
+    if(_pinBuffer===_pinTemp){
+      localStorage.setItem(PIN_STORAGE, _pinBuffer);
+      _pinBuffer=''; _pinTemp=''; _pinMode='login';
+      unlockApp();
+      toast('✅ PIN이 변경되었습니다!');
+    } else {
+      _pinBuffer=''; _pinTemp=''; _pinMode='change_new';
+      document.getElementById('lock_msg').textContent = '일치하지 않습니다. 새 PIN을 다시 입력하세요';
+      pinError();
+    }
+    return;
+  }
+
+  // 기본 로그인
+  if(_pinBuffer===savedPin){
+    _pinFailCount=0;
+    sessionStorage.setItem(SESSION_AUTH,'1');
+    unlockApp();
+  } else {
+    _pinFailCount++;
+    _pinBuffer='';
+    if(_pinFailCount>=5){
+      document.getElementById('lock_msg').textContent = '30초 후 다시 시도하세요';
+      document.getElementById('lock_hint').textContent = `시도 횟수 초과`;
+      document.getElementById('numpad').style.pointerEvents='none';
+      setTimeout(()=>{
+        _pinFailCount=0;
+        document.getElementById('numpad').style.pointerEvents='';
+        document.getElementById('lock_msg').textContent='PIN을 입력하세요';
+        document.getElementById('lock_hint').textContent='';
+        updatePinDots(0);
+      },30000);
+    } else {
+      document.getElementById('lock_hint').textContent=`잘못된 PIN입니다. (${_pinFailCount}/5)`;
+    }
+    pinError();
+  }
+}
+
+function pinError(){
+  updatePinDots(4,'error');
+  document.getElementById('lock_screen').classList&&document.getElementById('lock_screen').style;
+  // 흔들기 애니메이션
+  const box = document.querySelector('.lock-box');
+  box.style.animation='shake .4s ease';
+  setTimeout(()=>{box.style.animation='';updatePinDots(0);},400);
+}
+
+function showLockScreen(mode='login'){
+  _pinBuffer=''; _pinMode=mode;
+  updatePinDots(0);
+  const msg = {
+    login:'PIN을 입력하세요',
+    setup:'새 PIN 4자리를 설정하세요',
+    change_new:'새 PIN 4자리를 입력하세요'
+  }[mode]||'PIN을 입력하세요';
+  document.getElementById('lock_msg').textContent=msg;
+  document.getElementById('lock_hint').textContent=mode==='setup'?'처음 실행 시 PIN을 설정합니다':'';
+  document.getElementById('lock_screen').style.display='flex';
+}
+
+function unlockApp(){
+  document.getElementById('lock_screen').style.display='none';
+}
+
+function lockApp(){
+  closeSettings();
+  sessionStorage.removeItem(SESSION_AUTH);
+  showLockScreen('login');
+}
+
+function startChangePin(){
+  closeSettings();
+  showLockScreen('change_new');
+}
+
+function checkAuthAndInit(){
+  buildNumpad();
+  const pin = localStorage.getItem(PIN_STORAGE);
+  if(!pin){ showLockScreen('setup'); return; }
+  const auth = sessionStorage.getItem(SESSION_AUTH);
+  if(!auth){ showLockScreen('login'); return; }
+  unlockApp();
+}
+
+// CSS: shake animation
+const shakeStyle=document.createElement('style');
+shakeStyle.textContent=`
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+`;
+document.head.appendChild(shakeStyle);
+
+// 30분 자동 잠금
+let _inactiveTimer;
+function resetInactiveTimer(){
+  clearTimeout(_inactiveTimer);
+  _inactiveTimer = setTimeout(()=>{
+    if(sessionStorage.getItem(SESSION_AUTH)) lockApp();
+  }, 30*60*1000);
+}
+document.addEventListener('click',resetInactiveTimer);
+document.addEventListener('keydown',resetInactiveTimer);
+
+// ════════════════════════════════════════════
+//  설정 모달
+// ════════════════════════════════════════════
+function openSettings(){
+  document.getElementById('settings_modal_bg').classList.add('show');
+}
+function closeSettings(){
+  document.getElementById('settings_modal_bg').classList.remove('show');
+}
+function handleSettingsBgClick(e){
+  if(e.target===document.getElementById('settings_modal_bg')) closeSettings();
+}
+
+// ════════════════════════════════════════════
+//  데이터 내보내기 / 불러오기
+// ════════════════════════════════════════════
+function exportData(){
+  const payload={
+    version:3,
+    exported:new Date().toISOString(),
+    history:HISTORY,
+    plans:PLANS,
+    annual_goal: HISTORY[CURRENT]?.annual_goal || 45000000
+  };
+  const json=JSON.stringify(payload,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=new Date();
+  a.href=url;
+  a.download=`가계부_백업_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 데이터가 저장되었습니다!');
+}
+
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.history){ HISTORY=data.history; saveHistory(); }
+      if(data.plans){ PLANS=data.plans; savePlans(); }
+      e.target.value='';
+      closeSettings();
+      render();
+      renderPlans();
+      toast('📥 데이터를 불러왔습니다!');
+    }catch(err){
+      alert('파일 형식이 올바르지 않습니다. 올바른 가계부 백업 파일(.json)을 선택해주세요.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData(){
+  if(!confirm('⚠️ 모든 데이터가 삭제됩니다.\n\n먼저 "데이터 내보내기"로 백업하는 것을 권장합니다.\n\n정말 초기화하시겠습니까?')) return;
+  if(!confirm('마지막 확인: 정말로 모든 가계부 데이터를 삭제하시겠습니까?')) return;
+  localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(PLANS_KEY);
+  HISTORY=JSON.parse(JSON.stringify(SEED));
+  PLANS=JSON.parse(JSON.stringify(PLAN_SEED));
+  saveHistory(); savePlans();
+  closeSettings();
+  render(); renderPlans();
+  toast('🔄 데이터가 초기화되었습니다');
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+loadHistory();
+loadPlans();
+// 가장 최신 월로 시작
+const allMonths = sortedMonths();
+CURRENT = allMonths[allMonths.length-1];
+render();
+renderPlans();
+// 인증 확인 (마지막에 실행)
+checkAuthAndInit();
+resetInactiveTimer();
+</script>
+</body>
+</html>
